@@ -1,0 +1,31 @@
+# Docker Compose - Chạy MySQL + Redis cho đồ án
+# Lệnh chạy: docker compose up -d
+# Lệnh tắt:  docker compose down
+
+services:
+  # === MySQL Database ===
+  mysql:
+    image: mysql:8.0
+    container_name: doan-mysql
+    restart: always
+    ports:
+      - "3306:3306"           # Truy cập MySQL qua localhost:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root123        # Mật khẩu root
+      MYSQL_DATABASE: narration_db        # Tên database tự tạo sẵn
+      MYSQL_USER: doan_user               # User cho ứng dụng
+      MYSQL_PASSWORD: doan_pass123        # Mật khẩu user
+    volumes:
+      - mysql_data:/var/lib/mysql         # Lưu data, không mất khi tắt container
+
+  # === Redis (Cache & Message Queue) ===
+  redis:
+    image: redis:7-alpine
+    container_name: doan-redis
+    restart: always
+    ports:
+      - "6379:6379"           # Truy cập Redis qua localhost:6379
+
+# Volumes giữ data khi container bị xóa
+volumes:
+  mysql_data:

@@ -1,0 +1,29 @@
+# Node modules (Tuyệt đối không đẩy lên GitHub vì quá nặng)
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+
+# Environment files
+.env
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db
