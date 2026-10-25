@@ -1,40 +1,28 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import mysql from 'mysql2/promise';
-
-dotenv.config();
+import { env } from './config/env';
+import { pingDatabase } from './config/database';
+import { authRouter } from './auth';
+import { contentRouter } from './content';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Kết nối MySQL (chưa dùng cho nghiệp vụ, chỉ phục vụ health check)
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'doan_user',
-  password: process.env.DB_PASSWORD || 'doan_pass123',
-  database: process.env.DB_NAME || 'narration_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+// Gắn module theo tiền tố service (PRD 2.2): /api/auth/..., /api/content/...
+// Hiện hai router còn rỗng, chưa có route nào.
+app.use('/api/auth', authRouter);
+app.use('/api/content', contentRouter);
 
-// API09 - GET /api/health (PRD 6.1): 200 nếu MySQL OK, 503 nếu lỗi kết nối
+// API09 - GET /api/health: 200 nếu MySQL OK, 503 nếu lỗi kết nối
 app.get('/api/health', async (_req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.status(200).json({ status: 'ok' });
-  } catch (error) {
-    console.error('Health check thất bại - không kết nối được MySQL:', error);
-    res.status(503).json({ status: 'error' });
-  }
+  const isHealthy = await pingDatabase();
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'error',
+  });
 });
 
-const port = Number(process.env.PORT) || 5000;
-
-app.listen(port, () => {
-  console.log(`Backend đang chạy tại http://localhost:${port}`);
+app.listen(env.port, () => {
+  console.log(`Backend đang chạy tại http://localhost:${env.port}`);
 });
