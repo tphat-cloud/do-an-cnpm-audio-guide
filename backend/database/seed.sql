@@ -7,6 +7,9 @@
 
 USE narration_db;
 
+-- Ép client dùng UTF-8, tránh lỗi tiếng Việt khi import bằng client mặc định latin1 (container)
+SET NAMES utf8mb4;
+
 INSERT INTO locations (id, name, description)
 VALUES (
   1,

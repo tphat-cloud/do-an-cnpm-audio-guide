@@ -9,6 +9,9 @@ CREATE DATABASE IF NOT EXISTS narration_db
 
 USE narration_db;
 
+-- Ép client dùng UTF-8, tránh lỗi tiếng Việt khi import bằng client mặc định latin1 (container)
+SET NAMES utf8mb4;
+
 -- 5.2.1 Bảng locations (địa danh)
 CREATE TABLE IF NOT EXISTS locations (
   id          INT           NOT NULL AUTO_INCREMENT,
