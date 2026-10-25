@@ -22,11 +22,13 @@ ON DUPLICATE KEY UPDATE
   description = VALUES(description);
 
 -- 3 điểm tham quan mẫu cho địa danh 1 (dùng cho bản demo Web Client)
+-- Tọa độ GẦN ĐÚNG trong khuôn viên Dinh Độc Lập, các điểm cách nhau vài chục mét.
+-- Đây chỉ là số ước lượng để hiển thị bản đồ, cần kiểm tra lại nếu dùng chính thức.
 INSERT INTO pois (location_id, name, latitude, longitude, radius_m, order_index)
 VALUES
-  (1, 'Cổng chính Dinh Độc Lập', 10.7771000, 106.6956000, 10, 1),
-  (1, 'Phòng khánh tiết', 10.7769000, 106.6952000, 10, 2),
-  (1, 'Khu trưng bày xe tăng 390', 10.7774000, 106.6958000, 10, 3)
+  (1, 'Cổng chính Dinh Độc Lập', 10.7774000, 106.6954000, 10, 1),
+  (1, 'Phòng khánh tiết', 10.7770000, 106.6956500, 10, 2),
+  (1, 'Khu trưng bày xe tăng 390', 10.7774500, 106.6959500, 10, 3)
 ON DUPLICATE KEY UPDATE
   latitude = VALUES(latitude),
   longitude = VALUES(longitude),

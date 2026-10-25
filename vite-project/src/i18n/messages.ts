@@ -24,6 +24,7 @@ export interface UiText {
   back: string;
   tourSubtitle: string;
   selectPoiHint: string;
+  mapListen: string;
   narrationTitle: string;
   narrationLoading: string;
   narrationError: string;
@@ -53,6 +54,7 @@ export const MESSAGES: Record<Lang, UiText> = {
     back: 'Quay lại',
     tourSubtitle: 'Danh sách điểm',
     selectPoiHint: 'Chọn một điểm bên dưới để nghe thuyết minh',
+    mapListen: 'Nghe thuyết minh',
     narrationTitle: 'Nội dung thuyết minh',
     narrationLoading: 'Đang tải nội dung...',
     narrationError: 'Không tải được nội dung điểm',
@@ -80,6 +82,7 @@ export const MESSAGES: Record<Lang, UiText> = {
     back: 'Back',
     tourSubtitle: 'Points of interest',
     selectPoiHint: 'Tap a point below to hear its narration',
+    mapListen: 'Listen to narration',
     narrationTitle: 'Narration',
     narrationLoading: 'Loading content...',
     narrationError: 'Unable to load this point',
@@ -107,6 +110,7 @@ export const MESSAGES: Record<Lang, UiText> = {
     back: '返回',
     tourSubtitle: '景点列表',
     selectPoiHint: '点击下方景点即可收听讲解',
+    mapListen: '收听讲解',
     narrationTitle: '讲解内容',
     narrationLoading: '正在加载内容...',
     narrationError: '无法加载景点内容',
@@ -134,6 +138,7 @@ export const MESSAGES: Record<Lang, UiText> = {
     back: '뒤로',
     tourSubtitle: '관광지 목록',
     selectPoiHint: '아래 관광지를 선택하면 해설을 들을 수 있습니다',
+    mapListen: '해설 듣기',
     narrationTitle: '해설 내용',
     narrationLoading: '콘텐츠를 불러오는 중...',
     narrationError: '관광지 콘텐츠를 불러올 수 없습니다',
@@ -161,6 +166,7 @@ export const MESSAGES: Record<Lang, UiText> = {
     back: '戻る',
     tourSubtitle: '見どころ一覧',
     selectPoiHint: '下の見どころを選ぶと解説が聞けます',
+    mapListen: '解説を聞く',
     narrationTitle: '解説文',
     narrationLoading: 'コンテンツを読み込み中...',
     narrationError: 'コンテンツを読み込めません',

@@ -9,6 +9,7 @@ import {
 import { fetchPoiNarration } from '../api/content';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { TourMap } from '../components/TourMap';
 import { MESSAGES } from '../i18n/messages';
 import { readStoredLocationId, useTourStore } from '../store/useTourStore';
 import type { Lang, PoiNarration, PoiSummary } from '../types';
@@ -16,8 +17,8 @@ import type { Lang, PoiNarration, PoiSummary } from '../types';
 type NarrationStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
- * Màn hình tham quan (PRD 7.1.2 - UC03, UC05, UC10).
- * Bản demo chưa làm GPS, geofence và bản đồ: du khách chọn điểm trong danh sách.
+ * Màn hình tham quan (PRD 7.1.2 - UC03, UC05, UC06, UC10).
+ * Bản đồ chỉ hiện marker các điểm; chưa làm GPS, geofence và marker du khách.
  */
 export function TourPage() {
   const navigate = useNavigate();
@@ -169,6 +170,14 @@ export function TourPage() {
           />
         ) : (
           <>
+            <TourMap
+              pois={location.pois}
+              listenedPoiIds={listenedPoiIds}
+              selectedPoiId={selectedPoiId}
+              listenLabel={text.mapListen}
+              onListen={handleSelectPoi}
+            />
+
             {selectedPoiId === null && (
               <Alert type="info" showIcon title={text.selectPoiHint} />
             )}

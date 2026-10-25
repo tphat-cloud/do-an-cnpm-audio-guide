@@ -108,6 +108,54 @@ body {
   font-weight: 600;
 }
 
+/* ==== Bản đồ màn hình tham quan (UC06 - PRD 7.1.2, 7.3) ==== */
+.stg-map {
+  position: relative;
+  /* Giữ các lớp z-index của Leaflet nằm trong khung, không đè thanh trên cùng. */
+  isolation: isolate;
+  height: 40vh;
+  min-height: 220px;
+  max-height: 360px;
+  overflow: hidden;
+  border: 1px solid #e8edf5;
+  border-radius: 16px;
+  background: #eef2f7;
+}
+
+.stg-map-canvas.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  background: #eef2f7;
+}
+
+.stg-map-popup {
+  display: flex;
+  min-width: 168px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stg-map-popup-name {
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.stg-map-popup .ant-btn {
+  width: 100%;
+}
+
+/* Chưa nghe: xanh dương mặc định; đã nghe: xám; đang chọn: quầng sáng (PRD 7.3). */
+.stg-marker-listened {
+  filter: grayscale(1);
+  opacity: 0.85;
+}
+
+.stg-marker-active {
+  filter: drop-shadow(0 0 6px rgba(22, 119, 255, 0.85));
+}
+
 /* ==== Danh sách điểm ==== */
 .stg-list {
   display: flex;
