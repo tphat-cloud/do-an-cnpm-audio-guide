@@ -48,9 +48,42 @@ body {
 
 /* ==== Trang chào ==== */
 .stg-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 200px;
   padding: 28px 20px 22px;
+  overflow: hidden;
+  /* Dự phòng khi không có ảnh bìa: giữ nguyên nền gradient xanh như cũ. */
   background: linear-gradient(135deg, #1677ff 0%, #0b57d0 100%);
   color: #fff;
+}
+
+/* Ảnh bìa public/cover.webp làm nền, cắt vừa khung; lỗi thì component gỡ ảnh. */
+.stg-hero-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Lớp gradient xanh đậm mờ để chữ trắng vẫn đọc rõ trên ảnh. */
+.stg-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(9, 42, 92, 0.45) 0%,
+    rgba(9, 42, 92, 0.78) 100%
+  );
+}
+
+.stg-hero-content {
+  position: relative;
+  z-index: 1;
 }
 
 .stg-badge {
@@ -162,37 +195,77 @@ body {
   flex-direction: column;
 }
 
+/* Listy mặc định có padding, kẻ dòng và nền hover; mỗi dòng ở đây đã là một thẻ. */
+.stg-list.ant-listy .ant-listy-item {
+  margin-bottom: 10px;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.stg-list.ant-listy .ant-listy-item:last-child {
+  margin-bottom: 0;
+}
+
+.stg-list.ant-listy .ant-listy-item:hover {
+  background: transparent;
+}
+
+/* Mỗi dòng là thẻ bo góc có đổ bóng nhẹ và phản hồi khi chạm (PRD 7.3). */
 .stg-poi-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 52px;
-  padding: 8px 4px;
-  border-bottom: 1px solid #f0f0f0;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid #eef1f6;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stg-poi-row:active {
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
 }
 
 .stg-poi-button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   min-height: 56px;
-  padding: 8px 4px;
-  border: 0;
-  border-bottom: 1px solid #f0f0f0;
-  border-radius: 12px;
-  background: transparent;
+  padding: 10px 14px;
+  border: 1px solid #eef1f6;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.stg-poi-button.is-active,
-.stg-poi-button:active {
+.stg-poi-button.is-active {
+  border-color: #cfe3ff;
   background: #f0f7ff;
+  box-shadow: 0 3px 12px rgba(22, 119, 255, 0.14);
+}
+
+.stg-poi-button:active {
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+/* Icon nhỏ cạnh số thứ tự. */
+.stg-poi-icon {
+  flex: 0 0 auto;
+  font-size: 16px;
+  color: #1677ff;
 }
 
 .stg-poi-index {

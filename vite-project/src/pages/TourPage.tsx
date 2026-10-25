@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Empty, Listy, Result, Spin, Tag } from 'antd';
 import {
   ArrowLeftOutlined,
+  EnvironmentOutlined,
   ReloadOutlined,
   RightOutlined,
 } from '@ant-design/icons';
@@ -263,6 +264,7 @@ export function TourPage() {
                       onClick={() => handleSelectPoi(poi.id)}
                     >
                       <span className="stg-poi-index">{index + 1}</span>
+                      <EnvironmentOutlined className="stg-poi-icon" aria-hidden />
                       <span className="stg-poi-name">{poi.name}</span>
                       {isListened && <Tag className="stg-tag-listened">{text.listened}</Tag>}
                       <RightOutlined className="stg-poi-arrow" aria-hidden />

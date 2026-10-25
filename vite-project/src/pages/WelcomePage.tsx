@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Empty, Listy, Result, Spin } from 'antd';
-import { ReloadOutlined, RightOutlined } from '@ant-design/icons';
+import { ReloadOutlined, EnvironmentOutlined, RightOutlined } from '@ant-design/icons';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { MESSAGES } from '../i18n/messages';
 import { useTourStore } from '../store/useTourStore';
@@ -27,6 +27,8 @@ export function WelcomePage() {
   const loadLocation = useTourStore((state) => state.loadLocation);
 
   const [retryCount, setRetryCount] = useState(0);
+  // Ảnh bìa lỗi/không tải được thì bỏ hẳn, quay về nền gradient xanh của khối trên cùng.
+  const [coverFailed, setCoverFailed] = useState(false);
   const text = MESSAGES[lang];
 
   useEffect(() => {
@@ -73,9 +75,23 @@ export function WelcomePage() {
   return (
     <div className="stg-screen">
       <header className="stg-hero">
-        <span className="stg-badge">SMART TOUR GUIDE</span>
-        <h1 className="stg-title">{location.name}</h1>
-        {location.description && <p className="stg-description">{location.description}</p>}
+        {!coverFailed && (
+          <img
+            className="stg-hero-cover"
+            src="/cover.webp"
+            alt=""
+            aria-hidden
+            onError={() => setCoverFailed(true)}
+          />
+        )}
+
+        <div className="stg-hero-content">
+          <span className="stg-badge">SMART TOUR GUIDE</span>
+          <h1 className="stg-title">{location.name}</h1>
+          {location.description && (
+            <p className="stg-description">{location.description}</p>
+          )}
+        </div>
       </header>
 
       <main className="stg-main">
@@ -94,6 +110,7 @@ export function WelcomePage() {
               itemRender={(poi, index) => (
                 <div className="stg-poi-row">
                   <span className="stg-poi-index">{index + 1}</span>
+                  <EnvironmentOutlined className="stg-poi-icon" aria-hidden />
                   <span className="stg-poi-name">{poi.name}</span>
                 </div>
               )}
