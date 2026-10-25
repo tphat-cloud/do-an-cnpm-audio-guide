@@ -4,15 +4,298 @@
   padding: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
     'Noto Color Emoji';
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #eef2f7;
+  color: #1f1f1f;
+  /* Chỉ làm chế độ sáng (PRD 7.3). */
+  color-scheme: light;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
+}
+
+/* Mobile-first: nội dung rộng tối đa 480px, chỉ light mode (PRD 7.3). */
+.stg-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: #fff;
+  box-shadow: 0 0 24px rgba(15, 23, 42, 0.06);
+}
+
+.stg-center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.stg-spin-holder {
+  width: 140px;
+  height: 72px;
+}
+
+/* ==== Trang chào ==== */
+.stg-hero {
+  padding: 28px 20px 22px;
+  background: linear-gradient(135deg, #1677ff 0%, #0b57d0 100%);
+  color: #fff;
+}
+
+.stg-badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stg-title {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stg-description {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.stg-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+}
+
+.stg-section-label {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5c6675;
+}
+
+.stg-empty {
+  margin: 24px 0;
+}
+
+/* ==== Chọn ngôn ngữ: giữ vùng chạm cao >= 44px ==== */
+.stg-lang {
+  padding: 4px;
+}
+
+.stg-lang .ant-segmented-item-label {
+  min-height: 44px;
+  line-height: 44px;
+  font-weight: 600;
+}
+
+/* ==== Danh sách điểm ==== */
+.stg-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.stg-poi-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stg-poi-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stg-poi-button.is-active,
+.stg-poi-button:active {
+  background: #f0f7ff;
+}
+
+.stg-poi-index {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e6f0ff;
+  color: #1677ff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stg-poi-name {
+  flex: 1;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.stg-poi-arrow {
+  color: #b6bec9;
+}
+
+.stg-tag-listened {
+  margin-inline-end: 0;
+  color: #5c6675;
+  border-color: #d9d9d9;
+  background: #fafafa;
+}
+
+/* ==== Khối thuyết minh ==== */
+.stg-narration {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e8edf5;
+  border-radius: 16px;
+  scroll-margin-top: 12px;
+}
+
+.stg-narration-name {
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 650;
+}
+
+.stg-narration-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: #5c6675;
+}
+
+/* Nội dung thuyết minh tối thiểu 16px để đọc ngoài trời (PRD 7.3). */
+.stg-narration-text {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #333;
+  white-space: pre-line;
+}
+
+.stg-notice {
+  margin-top: -4px;
+}
+
+/* ==== Trình phát audio ==== */
+.stg-player {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stg-player audio {
+  display: none;
+}
+
+.stg-player-time {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -8px;
+  font-size: 13px;
+  color: #5c6675;
+}
+
+.stg-player-done {
+  align-self: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #52c41a;
+}
+
+/* ==== Nút chạm cao tối thiểu 44px (PRD 7.3) ==== */
+.stg-touch {
+  min-height: 44px;
+}
+
+.ant-btn.stg-touch {
+  height: auto;
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.stg-icon-button.ant-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+
+/* ==== Thanh trên cùng và nút bắt đầu ==== */
+.stg-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.stg-topbar-title {
+  flex: 1;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stg-lang-bar {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.stg-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.stg-start {
+  min-height: 52px;
+  font-size: 17px;
+  font-weight: 600;
 }
