@@ -15,6 +15,7 @@ import {
   type SupportedLang,
 } from './poi.repository';
 import { validatePoiCreate } from './poi.validation';
+import { countPresence, isValidSessionId, recordPresence } from './presence';
 import { commitAudioFile, discardAudioFile, receiveAudio } from './upload';
 
 /**
@@ -223,3 +224,22 @@ contentRouter.put(
     }
   }
 );
+
+// API10 - POST /api/content/presence (công khai, không cần đăng nhập)
+contentRouter.post('/presence', (req, res) => {
+  const body = (req.body ?? {}) as { sessionId?: unknown };
+
+  if (!isValidSessionId(body.sessionId)) {
+    res.status(400).json({ message: 'Mã phiên không hợp lệ' });
+    return;
+  }
+
+  // Không trả nội dung: Web Client chỉ cần biết là đã ghi nhận.
+  recordPresence(body.sessionId);
+  res.status(204).end();
+});
+
+// API11 - GET /api/content/presence/count (chỉ Admin, PRD 2.7.1)
+contentRouter.get('/presence/count', requireAdmin, (_req, res) => {
+  res.status(200).json(countPresence());
+});

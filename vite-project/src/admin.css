@@ -83,6 +83,24 @@
   padding: 64px 0;
 }
 
+/* Ô thống kê truy cập ở đầu trang /admin (API11). */
+.admin-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-stat-card {
+  flex: 1;
+  background: #fff;
+}
+
+.admin-stats-note {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
 .admin-table {
   background: #fff;
 }

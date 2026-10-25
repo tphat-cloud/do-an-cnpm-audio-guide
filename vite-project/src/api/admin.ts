@@ -108,6 +108,20 @@ export async function fetchAdminLocation(): Promise<LocationDetail> {
   return data;
 }
 
+/** Số liệu truy cập trả về từ API11. */
+export interface PresenceStats {
+  activeSessions: number;
+  totalSessions: number;
+}
+
+/** API11 - GET /api/content/presence/count (chỉ Admin). */
+export async function fetchPresence(): Promise<PresenceStats> {
+  const { data } = await adminClient.get<PresenceStats>(
+    '/content/presence/count'
+  );
+  return data;
+}
+
 /** API04 - POST /api/content/pois (UC08). */
 export async function createPoi(payload: PoiCreatePayload): Promise<PoiDetail> {
   const { data } = await adminClient.post<PoiDetail>('/content/pois', payload);

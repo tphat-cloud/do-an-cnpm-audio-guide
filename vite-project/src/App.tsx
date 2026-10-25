@@ -2,6 +2,7 @@ import { App as AntApp, ConfigProvider } from 'antd';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './admin.css';
 import { AdminGuard } from './components/AdminGuard';
+import { VisitorPresence } from './components/VisitorPresence';
 import { AdminContentPage } from './pages/admin/AdminContentPage';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
@@ -31,6 +32,8 @@ function App() {
       {/* Bọc App của antd để message/modal nhận theme và ngữ cảnh (antd v6). */}
       <AntApp>
         <BrowserRouter>
+          {/* Đếm người đang truy cập cho phần khách (API10), không ảnh hưởng giao diện. */}
+          <VisitorPresence />
           <Routes>
             <Route path="/" element={<WelcomePage />} />
             <Route path="/tour" element={<TourPage />} />

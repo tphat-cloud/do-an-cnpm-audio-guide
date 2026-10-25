@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Button, Empty, Result, Spin, Table, Typography } from 'antd';
+import { Button, Card, Empty, Result, Spin, Statistic, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { fetchAdminLocation } from '../../api/admin';
+import { EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { fetchAdminLocation, fetchPresence } from '../../api/admin';
+import type { PresenceStats } from '../../api/admin';
 import type { PoiSummary } from '../../types';
 import { AddPoiModal } from './AddPoiModal';
 
 type LoadStatus = 'loading' | 'ready' | 'error';
+
+/** Chu kỳ làm mới số liệu truy cập (API11). */
+const PRESENCE_POLL_MS = 10_000;
 
 /**
  * Bảng danh sách điểm (PRD 7.1.4 - UC08). Bản này chỉ xem danh sách và thêm
@@ -49,6 +53,8 @@ export function AdminPoiPage() {
   const [status, setStatus] = useState<LoadStatus>('loading');
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [presence, setPresence] = useState<PresenceStats | null>(null);
+  const [presenceStale, setPresenceStale] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +74,32 @@ export function AdminPoiPage() {
       active = false;
     };
   }, [reloadKey]);
+
+  // Số liệu truy cập (API11) tự làm mới mỗi 10 giây; lỗi thì giữ số cũ.
+  useEffect(() => {
+    let active = true;
+
+    const loadPresence = () => {
+      fetchPresence()
+        .then((stats) => {
+          if (!active) return;
+          setPresence(stats);
+          setPresenceStale(false);
+        })
+        .catch(() => {
+          if (!active) return;
+          setPresenceStale(true);
+        });
+    };
+
+    loadPresence();
+    const timer = window.setInterval(loadPresence, PRESENCE_POLL_MS);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const retry = () => {
     setStatus('loading');
@@ -99,6 +131,31 @@ export function AdminPoiPage() {
           Thêm điểm
         </Button>
       </header>
+
+      <section className="admin-stats">
+        <Card variant="outlined" className="admin-stat-card">
+          <Statistic
+            title="Đang truy cập"
+            value={presence?.activeSessions ?? 0}
+            prefix={<TeamOutlined />}
+            loading={presence === null && !presenceStale}
+          />
+        </Card>
+        <Card variant="outlined" className="admin-stat-card">
+          <Statistic
+            title="Tổng lượt truy cập"
+            value={presence?.totalSessions ?? 0}
+            prefix={<EyeOutlined />}
+            loading={presence === null && !presenceStale}
+          />
+        </Card>
+      </section>
+
+      {presenceStale && (
+        <Typography.Text type="warning" className="admin-stats-note">
+          Không cập nhật được số liệu truy cập.
+        </Typography.Text>
+      )}
 
       {status === 'loading' && (
         <div className="admin-center">
