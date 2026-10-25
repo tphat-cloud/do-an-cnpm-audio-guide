@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "init-db": "tsx src/scripts/initDb.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc"
   },
   "keywords": [],
