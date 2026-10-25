@@ -1,6 +1,21 @@
 import { Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { requireAdmin } from './auth.middleware';
 import { findLocationWithPois } from './location.repository';
-import { findPoiNarration, isSupportedLang } from './poi.repository';
+import {
+  createPoi,
+  findPoiById,
+  findPoiNarration,
+  findTranslationContent,
+  isDuplicateEntryError,
+  isPoiNameTaken,
+  isSupportedLang,
+  locationExists,
+  saveTranslation,
+  type SupportedLang,
+} from './poi.repository';
+import { validatePoiCreate } from './poi.validation';
+import { commitAudioFile, discardAudioFile, receiveAudio } from './upload';
 
 /**
  * Module content (PRD 2.2 - giai đoạn 1, sau tách thành content-service).
@@ -13,8 +28,17 @@ import { findPoiNarration, isSupportedLang } from './poi.repository';
  */
 export const contentRouter = Router();
 
+// Thư mục audio do module content quản lý, src/index.ts dùng để phục vụ tĩnh.
+export { AUDIO_DIR, AUDIO_URL_PREFIX } from './upload';
+
 const ID_PATTERN = /^\d+$/;
 const DEFAULT_LANG = 'vi';
+
+/** Tham số đường dẫn của Express 5 có thể là mảng; route ở đây chỉ dùng tham số đơn. */
+function readParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? '';
+  return value ?? '';
+}
 
 // API02 - GET /api/content/locations/:id (UC01, UC06, UC10)
 contentRouter.get('/locations/:id', async (req, res) => {
@@ -74,3 +98,128 @@ contentRouter.get('/pois/:id', async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ' });
   }
 });
+
+// API04 - POST /api/content/pois (UC08)
+contentRouter.post('/pois', requireAdmin, async (req, res) => {
+  const { input, errors } = validatePoiCreate(req.body);
+
+  if (!input) {
+    res.status(400).json({ message: 'Dữ liệu không hợp lệ', errors });
+    return;
+  }
+
+  try {
+    if (!(await locationExists(input.locationId))) {
+      res.status(404).json({ message: 'Không tìm thấy địa danh' });
+      return;
+    }
+
+    if (await isPoiNameTaken(input.locationId, input.name)) {
+      res.status(409).json({ message: 'Tên điểm đã tồn tại' });
+      return;
+    }
+
+    const poi = await createPoi(input);
+    res.status(201).json(poi);
+  } catch (error) {
+    // Hai request đồng thời có thể cùng vượt bước kiểm tra trùng tên phía trên,
+    // khi đó ràng buộc uq_pois_location_name mới là nơi báo lỗi.
+    if (isDuplicateEntryError(error)) {
+      res.status(409).json({ message: 'Tên điểm đã tồn tại' });
+      return;
+    }
+
+    console.error('Lỗi API04 - thêm điểm tham quan:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
+/**
+ * Kiểm tra tham số trước khi nhận file (API08): id và lang phải đúng ngay từ
+ * đầu để không ghi file rác vào backend/uploads/audio.
+ */
+function validateTranslationTarget(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!ID_PATTERN.test(readParam(req.params.id))) {
+    res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+    return;
+  }
+
+  if (!isSupportedLang(readParam(req.params.lang))) {
+    res.status(400).json({ message: 'Ngôn ngữ không được hỗ trợ' });
+    return;
+  }
+
+  next();
+}
+
+/** Điểm phải tồn tại (404) trước khi nhận file, để không phải dọn file rác. */
+async function ensurePoiExists(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const poi = await findPoiById(Number(readParam(req.params.id)));
+
+    if (!poi) {
+      res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error('Lỗi API08 - kiểm tra điểm tham quan:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+}
+
+// API08 - PUT /api/content/pois/:id/translations/:lang (UC09)
+contentRouter.put(
+  '/pois/:id/translations/:lang',
+  requireAdmin,
+  validateTranslationTarget,
+  ensurePoiExists,
+  receiveAudio,
+  async (req, res) => {
+    const poiId = Number(readParam(req.params.id));
+    // Lang đã được kiểm tra trong validateTranslationTarget.
+    const lang = readParam(req.params.lang) as SupportedLang;
+    const body = (req.body ?? {}) as { text?: unknown };
+    const text = typeof body.text === 'string' ? body.text.trim() : '';
+
+    if (text === '') {
+      // Văn bản bắt buộc, kể cả khi Admin đã chọn file (PRD 3.3.9 - 6a).
+      await discardAudioFile(req);
+      res.status(400).json({ message: 'Vui lòng nhập nội dung thuyết minh' });
+      return;
+    }
+
+    try {
+      const existing = await findTranslationContent(poiId, lang);
+
+      // Có file mới thì đổi tên thành poi<id>-<lang>.mp3, ghi đè file cũ.
+      const uploadedAudioUrl = req.file
+        ? await commitAudioFile(req, poiId, lang)
+        : null;
+
+      // uploadedAudioUrl = null: giữ nguyên audio cũ trong CSDL.
+      await saveTranslation(poiId, lang, text, uploadedAudioUrl);
+
+      res.status(200).json({
+        poiId,
+        lang,
+        text,
+        audioUrl: uploadedAudioUrl ?? existing?.audioUrl ?? null,
+        overwritten: existing !== null,
+      });
+    } catch (error) {
+      console.error('Lỗi API08 - lưu nội dung thuyết minh:', error);
+      await discardAudioFile(req);
+      res.status(500).json({ message: 'Lỗi máy chủ' });
+    }
+  }
+);

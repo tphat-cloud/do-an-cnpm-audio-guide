@@ -10,6 +10,9 @@ dist/
 .env
 *.local
 
+# File audio admin tải lên (PRD 6.1 - phục vụ tại /uploads/audio)
+uploads/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

@@ -9,6 +9,9 @@ dotenv.config();
 export const env = {
   port: Number(process.env.PORT) || 5000,
 
+  // Web Client (Vite) chạy ở cổng 5173 khi phát triển.
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
