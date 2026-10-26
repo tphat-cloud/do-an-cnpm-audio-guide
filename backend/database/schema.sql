@@ -1,6 +1,6 @@
 -- ============================================================
 -- Schema database narration_db (PRD Chương 5)
--- MySQL 8.0 - 4 bảng: locations, pois, poi_translations, admins
+-- MySQL 8.0 - 5 bảng: locations, pois, poi_translations, admins, location_translations
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS narration_db
@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS poi_translations (
   id             INT          NOT NULL AUTO_INCREMENT,
   poi_id         INT          NOT NULL,
   lang           VARCHAR(5)   NOT NULL,
+  name           VARCHAR(255) NULL,
   narration_text TEXT         NOT NULL,
   audio_url      VARCHAR(500) NULL,
   created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -65,4 +66,22 @@ CREATE TABLE IF NOT EXISTS admins (
   locked_until    TIMESTAMP    NULL DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_admins_username (username)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- 5.2.5 Bảng location_translations (tên và mô tả địa danh theo ngôn ngữ)
+-- PRD chỉ nêu tên bảng ở mục 5.2.5, nên các cột được lấy theo cấu trúc của
+-- poi_translations (5.2.3), thay narration_text/audio_url bằng name/description.
+CREATE TABLE IF NOT EXISTS location_translations (
+  id          INT          NOT NULL AUTO_INCREMENT,
+  location_id INT          NOT NULL,
+  lang        VARCHAR(5)   NOT NULL,
+  name        VARCHAR(255) NULL,
+  description TEXT         NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP    NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_location_translations_location_lang (location_id, lang),
+  CONSTRAINT fk_location_translations_location
+    FOREIGN KEY (location_id) REFERENCES locations (id)
+    ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

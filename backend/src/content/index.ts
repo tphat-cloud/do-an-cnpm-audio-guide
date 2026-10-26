@@ -42,6 +42,8 @@ export { AUDIO_DIR, AUDIO_URL_PREFIX } from './upload';
 
 const ID_PATTERN = /^\d+$/;
 const DEFAULT_LANG = 'vi';
+/** Tên điểm theo ngôn ngữ tối đa 255 ký tự (PRD 5.2.5 / 5.2.3). */
+const MAX_TRANSLATION_NAME_LENGTH = 255;
 
 /** Tham số đường dẫn của Express 5 có thể là mảng; route ở đây chỉ dùng tham số đơn. */
 function readParam(value: string | string[] | undefined): string {
@@ -49,7 +51,16 @@ function readParam(value: string | string[] | undefined): string {
   return value ?? '';
 }
 
-// API02 - GET /api/content/locations/:id (UC01, UC06, UC10)
+/**
+ * Đọc tham số ?lang (vi, en, zh, ko, ja), mặc định vi (PRD 2.7.3).
+ * Trả null khi mã ngôn ngữ không thuộc 5 ngôn ngữ hỗ trợ.
+ */
+function readLang(value: unknown): SupportedLang | null {
+  const lang = typeof value === 'string' && value !== '' ? value : DEFAULT_LANG;
+  return isSupportedLang(lang) ? lang : null;
+}
+
+// API02 - GET /api/content/locations/:id?lang=vi (UC01, UC06, UC10)
 contentRouter.get('/locations/:id', async (req, res) => {
   const rawId = req.params.id;
 
@@ -58,8 +69,15 @@ contentRouter.get('/locations/:id', async (req, res) => {
     return;
   }
 
+  const lang = readLang(req.query.lang);
+
+  if (!lang) {
+    res.status(400).json({ message: 'Ngôn ngữ không được hỗ trợ' });
+    return;
+  }
+
   try {
-    const location = await findLocationWithPois(Number(rawId));
+    const location = await findLocationWithPois(Number(rawId), lang);
 
     if (!location) {
       res.status(404).json({ message: 'Mã QR không hợp lệ' });
@@ -83,12 +101,9 @@ contentRouter.get('/pois/:id', async (req, res) => {
     return;
   }
 
-  const lang =
-    typeof req.query.lang === 'string' && req.query.lang !== ''
-      ? req.query.lang
-      : DEFAULT_LANG;
+  const lang = readLang(req.query.lang);
 
-  if (!isSupportedLang(lang)) {
+  if (!lang) {
     res.status(400).json({ message: 'Ngôn ngữ không được hỗ trợ' });
     return;
   }
@@ -284,6 +299,35 @@ async function ensurePoiExists(
   }
 }
 
+interface TranslationNameUpdate {
+  /** false khi tên quá dài hoặc sai kiểu -> trả 400. */
+  valid: boolean;
+  /** undefined: không gửi (giữ nguyên); null: gửi chuỗi rỗng (lưu NULL). */
+  value: string | null | undefined;
+}
+
+/**
+ * Trường `name` của API08: không bắt buộc, tối đa 255 ký tự, cắt khoảng trắng
+ * đầu cuối; gửi rỗng thì lưu NULL, không gửi thì giữ nguyên giá trị cũ.
+ */
+function parseTranslationName(value: unknown): TranslationNameUpdate {
+  if (value === undefined || value === null) {
+    return { valid: true, value: undefined };
+  }
+
+  if (typeof value !== 'string') {
+    return { valid: false, value: undefined };
+  }
+
+  const name = value.trim();
+
+  if (name.length > MAX_TRANSLATION_NAME_LENGTH) {
+    return { valid: false, value: undefined };
+  }
+
+  return { valid: true, value: name === '' ? null : name };
+}
+
 // API08 - PUT /api/content/pois/:id/translations/:lang (UC09)
 contentRouter.put(
   '/pois/:id/translations/:lang',
@@ -295,13 +339,22 @@ contentRouter.put(
     const poiId = Number(readParam(req.params.id));
     // Lang đã được kiểm tra trong validateTranslationTarget.
     const lang = readParam(req.params.lang) as SupportedLang;
-    const body = (req.body ?? {}) as { text?: unknown };
+    const body = (req.body ?? {}) as { text?: unknown; name?: unknown };
     const text = typeof body.text === 'string' ? body.text.trim() : '';
+    const nameUpdate = parseTranslationName(body.name);
 
     if (text === '') {
       // Văn bản bắt buộc, kể cả khi Admin đã chọn file (PRD 3.3.9 - 6a).
       await discardAudioFile(req);
       res.status(400).json({ message: 'Vui lòng nhập nội dung thuyết minh' });
+      return;
+    }
+
+    if (!nameUpdate.valid) {
+      await discardAudioFile(req);
+      res
+        .status(400)
+        .json({ message: `Tên điểm tối đa ${MAX_TRANSLATION_NAME_LENGTH} ký tự` });
       return;
     }
 
@@ -314,7 +367,7 @@ contentRouter.put(
         : null;
 
       // uploadedAudioUrl = null: giữ nguyên audio cũ trong CSDL.
-      await saveTranslation(poiId, lang, text, uploadedAudioUrl);
+      await saveTranslation(poiId, lang, text, uploadedAudioUrl, nameUpdate.value);
 
       res.status(200).json({
         poiId,

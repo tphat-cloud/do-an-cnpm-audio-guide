@@ -1,9 +1,10 @@
 import { Alert, Button, Input, Progress, Space, Spin, Tag, Typography, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import type { LangDraft } from './narrationDraft';
+import { MAX_NAME_LENGTH, type LangDraft } from './narrationDraft';
 
 interface NarrationEditorProps {
   draft: LangDraft;
+  onNameChange: (name: string) => void;
   onTextChange: (text: string) => void;
   onPickFile: (file: File) => void;
   onClearFile: () => void;
@@ -13,11 +14,13 @@ interface NarrationEditorProps {
 }
 
 /**
- * Nội dung của một tab ngôn ngữ (PRD 7.1.5): ô văn bản, ô chọn file .mp3,
- * trình nghe thử audio hiện có, thanh tiến độ khi tải file và nút "Lưu".
+ * Nội dung của một tab ngôn ngữ (PRD 7.1.5): ô tên điểm theo ngôn ngữ, ô văn
+ * bản, ô chọn file .mp3, trình nghe thử audio hiện có, thanh tiến độ khi tải
+ * file và nút "Lưu".
  */
 export function NarrationEditor({
   draft,
+  onNameChange,
   onTextChange,
   onPickFile,
   onClearFile,
@@ -40,6 +43,25 @@ export function NarrationEditor({
             }
           />
         )}
+
+        <div className="admin-field">
+          <Typography.Text strong>Tên điểm (ngôn ngữ này)</Typography.Text>
+          <Input
+            value={draft.name}
+            onChange={(event) => onNameChange(event.target.value)}
+            maxLength={MAX_NAME_LENGTH}
+            showCount
+            placeholder="Tên điểm hiển thị cho khách ở ngôn ngữ này"
+            status={draft.nameError !== null ? 'error' : undefined}
+            disabled={draft.saving}
+          />
+          <Typography.Text type="secondary">
+            Không bắt buộc. Để trống thì khách thấy tên gốc của điểm.
+          </Typography.Text>
+          {draft.nameError !== null && (
+            <span className="admin-field-error">{draft.nameError}</span>
+          )}
+        </div>
 
         <div className="admin-field">
           <Typography.Text strong>Văn bản thuyết minh</Typography.Text>

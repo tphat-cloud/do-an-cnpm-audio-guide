@@ -1,5 +1,6 @@
 import type { RowDataPacket } from 'mysql2';
 import { pool } from '../config/database';
+import type { SupportedLang } from './poi.repository';
 
 export interface PoiSummary {
   id: number;
@@ -34,25 +35,42 @@ interface PoiRow extends RowDataPacket {
 
 /**
  * Lấy địa danh kèm danh sách điểm tham quan (API02 - UC01, UC06, UC10).
+ * Tên, mô tả địa danh và tên từng điểm lấy theo ngôn ngữ `lang` (PRD 2.7.3);
+ * bản dịch chưa có hoặc để trống thì dùng cột gốc trong `locations`/`pois`.
  * Trả null nếu địa danh không tồn tại.
  */
 export async function findLocationWithPois(
-  locationId: number
+  locationId: number,
+  lang: SupportedLang
 ): Promise<LocationDetail | null> {
   const [locationRows] = await pool.query<LocationRow[]>(
-    'SELECT id, name, description FROM locations WHERE id = ? LIMIT 1',
-    [locationId]
+    `SELECT l.id,
+            COALESCE(NULLIF(lt.name, ''), l.name) AS name,
+            COALESCE(NULLIF(lt.description, ''), l.description) AS description
+       FROM locations l
+       LEFT JOIN location_translations lt
+              ON lt.location_id = l.id AND lt.lang = ?
+      WHERE l.id = ?
+      LIMIT 1`,
+    [lang, locationId]
   );
 
   const location = locationRows[0];
   if (!location) return null;
 
   const [poiRows] = await pool.query<PoiRow[]>(
-    `SELECT id, name, latitude, longitude, radius_m, order_index
-       FROM pois
-      WHERE location_id = ?
-      ORDER BY order_index ASC, id ASC`,
-    [locationId]
+    `SELECT p.id,
+            COALESCE(NULLIF(pt.name, ''), p.name) AS name,
+            p.latitude,
+            p.longitude,
+            p.radius_m,
+            p.order_index
+       FROM pois p
+       LEFT JOIN poi_translations pt
+              ON pt.poi_id = p.id AND pt.lang = ?
+      WHERE p.location_id = ?
+      ORDER BY p.order_index ASC, p.id ASC`,
+    [lang, locationId]
   );
 
   return {

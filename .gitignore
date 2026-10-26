@@ -27,6 +27,10 @@ yarn-error.log*
 *.sln
 *.sw?
 
+# Batch script chạy local (không đưa lên repo)
+ngrok-tunnel.bat
+start-all.bat
+
 # OS metadata
 .DS_Store
 Thumbs.db

@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Empty, Listy, Result, Spin } from 'antd';
+import { Button, Empty, Listy, Result, Spin, Alert } from 'antd';
 import { ReloadOutlined, EnvironmentOutlined, RightOutlined } from '@ant-design/icons';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { MESSAGES } from '../i18n/messages';
 import { useTourStore } from '../store/useTourStore';
 import type { PoiSummary } from '../types';
+
+/**
+ * Mã QR chỉ trỏ tới URL gốc (không kèm ?location_id) thì dùng địa danh mặc định này.
+ * Đổi 1 sang location_id khác khi cần (dễ sửa, chỉ sửa hằng số này).
+ */
+const DEFAULT_LOCATION_ID = 1;
 
 /**
  * Trang chào (PRD 7.1.1 - UC01, UC02, UC03): đọc location_id từ URL giống mã QR,
@@ -14,10 +20,16 @@ import type { PoiSummary } from '../types';
 export function WelcomePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hasLocationParam = searchParams.has('location_id');
   const rawLocationId = searchParams.get('location_id') ?? '';
 
-  // Mã QR sai (rỗng hoặc không phải số) -> id 0, store trả trạng thái lỗi.
-  const locationId = /^\d+$/.test(rawLocationId) ? Number(rawLocationId) : 0;
+  // URL không có location_id -> dùng mặc định. Có tham số nhưng sai (rỗng/không phải số)
+  // -> id 0, store trả trạng thái "Mã QR không hợp lệ" như cũ.
+  const locationId = !hasLocationParam
+    ? DEFAULT_LOCATION_ID
+    : /^\d+$/.test(rawLocationId)
+      ? Number(rawLocationId)
+      : 0;
 
   const lang = useTourStore((state) => state.lang);
   const setLang = useTourStore((state) => state.setLang);
@@ -25,6 +37,9 @@ export function WelcomePage() {
   const status = useTourStore((state) => state.status);
   const errorKind = useTourStore((state) => state.errorKind);
   const loadLocation = useTourStore((state) => state.loadLocation);
+  const refreshing = useTourStore((state) => state.refreshing);
+  const refreshFailed = useTourStore((state) => state.refreshFailed);
+  const retryLangReload = useTourStore((state) => state.retryLangReload);
 
   const [retryCount, setRetryCount] = useState(0);
   // Ảnh bìa lỗi/không tải được thì bỏ hẳn, quay về nền gradient xanh của khối trên cùng.
@@ -98,6 +113,28 @@ export function WelcomePage() {
         <section className="stg-section">
           <p className="stg-section-label">{text.chooseLanguage}</p>
           <LanguageSelector value={lang} onChange={setLang} />
+
+          {/* Đổi ngôn ngữ: giữ nội dung cũ, chỉ hiện chỉ báo nhỏ (UC03). */}
+          {refreshing && (
+            <span className="stg-inline-loading">
+              <Spin size="small" />
+              {text.langReloading}
+            </span>
+          )}
+
+          {refreshFailed && (
+            <Alert
+              className="stg-lang-notice"
+              type="warning"
+              showIcon
+              title={text.langLoadError}
+              action={
+                <Button size="small" icon={<ReloadOutlined />} onClick={retryLangReload}>
+                  {text.retry}
+                </Button>
+              }
+            />
+          )}
         </section>
 
         {hasPois ? (

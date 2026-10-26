@@ -424,7 +424,7 @@ Công cụ: GitHub Actions. Quy trình gồm các bước theo thứ tự:
 
 ## **5.2 Mô tả các bảng** 
 
-Cơ sở dữ liệu MySQL 8.0, tên database: narration\_db. Gồm 4 bảng: locations, pois, poi\_translations, admins. Quan hệ: 1 location có nhiều poi (1-n); 1 poi có nhiều poi\_translations, mỗi ngôn ngữ một dòng (1-n).
+Cơ sở dữ liệu MySQL 8.0, tên database: narration\_db. Gồm 5 bảng: locations, location\_translations, pois, poi\_translations, admins. Quan hệ: 1 location có nhiều poi (1-n); 1 poi có nhiều poi\_translations, mỗi ngôn ngữ một dòng (1-n).
 
 ### **5.2.1 Bảng locations (địa danh)** 
 
@@ -462,6 +462,7 @@ Ràng buộc duy nhất: (location\_id, name). Xóa một location hoặc poi th
 | audio\_url  | VARCHAR(500) | NULL  | Đường dẫn file mp3; để trống nếu chưa có audio  |
 | created\_at  | TIMESTAMP  | DEFAULT CURRENT\_TIMESTAMP  |  |
 | updated\_at  | TIMESTAMP  | ON UPDATE CURRENT\_TIMESTAMP  |  |
+| name | VARCHAR(255)  | NULL | Tên điểm theo ngôn ngữ này; để trống thì dùng `pois.name` (tiếng Việt)  |
 
 Ràng buộc duy nhất: (poi\_id, lang), mỗi điểm chỉ có một bản nội dung cho mỗi ngôn ngữ.  
 Xóa poi thì xóa theo các dòng nội dung của poi đó (ON DELETE CASCADE), file mp3 tương ứng cũng bị xóa khỏi thư mục lưu trữ.
@@ -477,7 +478,19 @@ Xóa poi thì xóa theo các dòng nội dung của poi đó (ON DELETE CASCADE)
 | failed\_attempts  | INT  | NOT NULL, DEFAULT 0  | Số lần đăng nhập sai liên tiếp; về 0 khi đăng nhập đúng  |
 | locked\_until  | TIMESTAMP  | NULL  | Thời điểm hết khóa; trống nếu không bị khóa  |
 
-### 
+### **5.2.5 Bảng location\_translations**
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| :---- | :---- | :---- | :---- |
+| id | INT | PK, AUTO\_INCREMENT  |  |
+| location\_id | INT | FK → locations.id, NOT NULL  | Địa danh nào |
+| lang | VARCHAR(5)  | NOT NULL  | vi, en, zh, ko, ja  |
+| name | VARCHAR(255)  | NOT NULL  | Tên địa danh theo ngôn ngữ  |
+| description | TEXT | NULL | Mô tả ngắn theo ngôn ngữ  |
+| created\_at | TIMESTAMP  | DEFAULT CURRENT\_TIMESTAMP  |  |
+
+Ràng buộc duy nhất: (location\_id, lang). Xóa location thì xóa theo các bản dịch (ON DELETE CASCADE).  
+Cột name và description của bảng locations là bản gốc tiếng Việt, dùng khi thiếu bản dịch. Nội dung bảng này nạp bằng dữ liệu mẫu (chỉ có một địa danh), chưa có giao diện Admin để sửa.
 
 ## **5.3 Component Diagram** 
 
@@ -494,7 +507,7 @@ Quyền "Công khai" nghĩa là không cần đăng nhập. Quyền "Admin" yêu
 | Mã | Method | URL | Quyền | UC | Mô tả |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | API01  | POST | /api/auth/login  | Công khai | UC07  | Đăng nhập, trả JWT  |
-| API02 | GET | /api/content/locations/:id  | Công khai | UC01, UC06, UC10  | Lấy thông tin địa danh kèm danh sách điểm tham quan (tên, tọa độ, bán kính, thứ tự)  |
+| API02 | GET | /api/content/locations/:id?lang=vi   | Công khai | UC01, UC06, UC10  | Lấy thông tin địa danh kèm danh sách điểm tham quan (tên, tọa độ, bán kính, thứ tự)  Tên, mô tả địa danh và tên các điểm trả theo ngôn ngữ lang (mặc định vi); thiếu bản dịch thì dùng bản tiếng Việt.  |
 | API03 | GET | /api/content/pois/:id?lang=vi  | Công khai | UC03, UC05, UC10  | Lấy văn bản và audio của một điểm theo ngôn ngữ; thiếu thì trả bản tiếng Việt  |
 | API04 | POST | /api/content/pois  | Admin | UC08  | Thêm điểm tham quan  |
 | API05 | PUT | /api/content/pois/:id  | Admin | UC08  | Sửa điểm tham quan (thông tin, tọa độ, bán kính)  |
@@ -531,6 +544,9 @@ Request body:
 { "message": "Đăng nhập sai quá nhiều lần, vui lòng thử lại sau", "retryAfterSeconds": 300 }
 
 **API02 \- GET /api/content/locations/:id**   
+Tham số lang (vi, en, zh, ko, ja; mặc định vi). Sai lang trả 400 {"message":"Ngôn ngữ không được hỗ trợ"}.  
+Quy tắc: name và description của địa danh lấy từ location\_translations theo lang; thiếu thì lấy bản gốc tiếng Việt ở bảng locations. Tên mỗi điểm lấy từ poi\_translations.name theo lang; trống hoặc chưa có thì lấy pois.name.
+
 Ví dụ: GET /api/content/locations/1
 
 200 OK:  
@@ -557,6 +573,7 @@ Ví dụ: GET /api/content/locations/1
 { "message": "Mã QR không hợp lệ" }
 
 **API03 \- GET /api/content/pois/:id?lang=en**   
+Trường name trả theo quy tắc trên (tên điểm theo ngôn ngữ lang, thiếu thì dùng tên tiếng Việt).  
 Ví dụ: GET /api/content/pois/5?lang=en
 
 200 OK (có nội dung đúng ngôn ngữ):  
@@ -660,15 +677,15 @@ Header: Authorization: Bearer \<JWT\>
 Ví dụ: GET /api/content/pois/5/translations  
 Header: Authorization: Bearer \<JWT\>
 
-200 OK (luôn trả đủ 5 ngôn ngữ, ngôn ngữ chưa có nội dung thì text và audioUrl là null):  
+200 OK (luôn trả đủ 5 ngôn ngữ; ngôn ngữ chưa có nội dung thì name, text và audioUrl là null):  
 {  
   "poiId": 5,  
   "translations": \[  
-    { "lang": "vi", "text": "Chào mừng đến sảnh chính...", "audioUrl": "/uploads/audio/poi5-vi.mp3" },  
-    { "lang": "en", "text": "Welcome to the main hall...", "audioUrl": null },  
-    { "lang": "zh", "text": null, "audioUrl": null },  
-    { "lang": "ko", "text": null, "audioUrl": null },  
-    { "lang": "ja", "text": null, "audioUrl": null }  
+    { "lang": "vi", "name": "Sảnh chính", "text": "Chào mừng đến sảnh chính...", "audioUrl": "/uploads/audio/poi5-vi.mp3" },  
+    { "lang": "en", "name": "Main hall", "text": "Welcome to the main hall...", "audioUrl": null },  
+    { "lang": "zh", "name": null, "text": null, "audioUrl": null },  
+    { "lang": "ko", "name": null, "text": null, "audioUrl": null },  
+    { "lang": "ja", "name": null, "text": null, "audioUrl": null }  
   \]  
 }
 
@@ -685,12 +702,14 @@ Content-Type: multipart/form-data
 
 Các trường gửi lên:  
   text   (chuỗi, bắt buộc)  
-  audio  (file .mp3, tối đa 10 MB, không bắt buộc)
+  audio  (file .mp3, tối đa 10 MB, không bắt buộc)  
+name (chuỗi, không bắt buộc, tối đa 255 ký tự; trống thì xóa bản dịch tên, hệ thống dùng lại tên tiếng Việt) 
 
 200 OK (lưu mới hoặc ghi đè):  
 {  
   "poiId": 5,  
   "lang": "en",  
+  "name": "Main hall",  
   "text": "Welcome to the main hall...",  
   "audioUrl": "/uploads/audio/poi5-en.mp3",  
   "overwritten": false  

@@ -14,6 +14,9 @@ export const LANG_LABELS: Record<Lang, string> = {
 /** Giới hạn file audio theo PRD 2.7.3 và API08. */
 export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
+/** Tên điểm theo ngôn ngữ tối đa 255 ký tự (PRD 5.2.5 / 5.2.3). */
+export const MAX_NAME_LENGTH = 255;
+
 /** Bản nháp nội dung của một ngôn ngữ trong trang quản lý thuyết minh. */
 export interface LangDraft {
   /** Đang gọi API07 để điền sẵn cả 5 ngôn ngữ. */
@@ -23,6 +26,11 @@ export interface LangDraft {
   loaded: boolean;
   /** Ngôn ngữ này đã có nội dung trong CSDL -> hiện dấu tích và hỏi ghi đè. */
   hasContent: boolean;
+  /** Tên điểm theo ngôn ngữ; để trống thì backend lưu NULL. */
+  name: string;
+  /** Tên đang lưu trong CSDL, dùng để biết Admin đã sửa dở chưa. */
+  baselineName: string;
+  nameError: string | null;
   text: string;
   /** Văn bản đang lưu trong CSDL, dùng để biết Admin đã sửa dở chưa. */
   baselineText: string;
@@ -45,6 +53,9 @@ export function createEmptyDraft(): LangDraft {
     loadError: null,
     loaded: false,
     hasContent: false,
+    name: '',
+    baselineName: '',
+    nameError: null,
     text: '',
     baselineText: '',
     audioUrl: null,

@@ -335,6 +335,21 @@ body {
   margin-top: -4px;
 }
 
+/* Chỉ báo nhỏ khi tải lại địa danh do đổi ngôn ngữ (UC03). */
+.stg-inline-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #5c6675;
+}
+
+/* Báo lỗi đổi ngôn ngữ, đặt ngay dưới nút chọn ngôn ngữ (UC03 - 5b). */
+.stg-lang-notice {
+  margin-top: 10px;
+}
+
 /* ==== Trình phát audio ==== */
 .stg-player {
   display: flex;

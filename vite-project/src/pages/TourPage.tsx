@@ -32,6 +32,9 @@ export function TourPage() {
   const loadLocation = useTourStore((state) => state.loadLocation);
   const listenedPoiIds = useTourStore((state) => state.listenedPoiIds);
   const markListened = useTourStore((state) => state.markListened);
+  const refreshing = useTourStore((state) => state.refreshing);
+  const refreshFailed = useTourStore((state) => state.refreshFailed);
+  const retryLangReload = useTourStore((state) => state.retryLangReload);
 
   const [selectedPoiId, setSelectedPoiId] = useState<number | null>(null);
   const [selectionNonce, setSelectionNonce] = useState(0);
@@ -160,6 +163,28 @@ export function TourPage() {
 
       <div className="stg-lang-bar">
         <LanguageSelector value={lang} onChange={handleChangeLang} />
+
+        {/* Đổi ngôn ngữ: giữ tên điểm cũ trên bản đồ/danh sách, chỉ hiện chỉ báo nhỏ. */}
+        {refreshing && (
+          <span className="stg-inline-loading">
+            <Spin size="small" />
+            {text.langReloading}
+          </span>
+        )}
+
+        {refreshFailed && (
+          <Alert
+            className="stg-lang-notice"
+            type="warning"
+            showIcon
+            title={text.langLoadError}
+            action={
+              <Button size="small" icon={<ReloadOutlined />} onClick={retryLangReload}>
+                {text.retry}
+              </Button>
+            }
+          />
+        )}
       </div>
 
       <main className="stg-main">
@@ -223,7 +248,7 @@ export function TourPage() {
                         src={narration.audioUrl}
                         autoPlay={autoPlay}
                         text={text}
-                        onEnded={() => markListened(narration.poiId)}
+                        onStarted={() => markListened(narration.poiId)}
                       />
                     ) : (
                       <Alert type="warning" showIcon title={text.noAudioNotice} />

@@ -1,9 +1,18 @@
 import { apiClient } from './client';
 import type { Lang, LocationDetail, PoiNarration } from '../types';
 
-/** API02 - GET /api/content/locations/:id (UC01). */
-export async function fetchLocation(locationId: number): Promise<LocationDetail> {
-  const { data } = await apiClient.get<LocationDetail>(`/content/locations/${locationId}`);
+/**
+ * API02 - GET /api/content/locations/:id?lang=xx (UC01, UC03, UC06, UC10).
+ * Tên, mô tả địa danh và tên các điểm do backend trả theo ngôn ngữ `lang`.
+ */
+export async function fetchLocation(
+  locationId: number,
+  lang: Lang
+): Promise<LocationDetail> {
+  const { data } = await apiClient.get<LocationDetail>(
+    `/content/locations/${locationId}`,
+    { params: { lang } }
+  );
   return data;
 }
 

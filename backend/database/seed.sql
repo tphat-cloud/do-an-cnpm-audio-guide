@@ -21,6 +21,20 @@ ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   description = VALUES(description);
 
+-- Tên và mô tả địa danh 1 theo 5 ngôn ngữ (PRD 2.7.3, 5.2.5).
+-- Bản vi lấy nguyên văn nội dung ở bảng locations; các bản en, zh, ko, ja là
+-- BẢN DỊCH TẠM, cần người phụ trách kiểm tra lại trước khi dùng chính thức.
+INSERT INTO location_translations (location_id, lang, name, description)
+VALUES
+  (1, 'vi', 'Dinh Độc Lập', 'Di tích lịch sử quốc gia đặc biệt tại Quận 1, TP. Hồ Chí Minh. Nơi ghi dấu sự kiện 30/4/1975.'),
+  (1, 'en', 'Independence Palace', 'A special national historical relic in District 1, Ho Chi Minh City. It marks the events of 30 April 1975.'),
+  (1, 'zh', '独立宫', '位于胡志明市第一郡的国家级特别历史遗迹，见证了1975年4月30日的历史事件。'),
+  (1, 'ko', '독립궁', '호찌민시 1군에 있는 국가 특별 사적지로, 1975년 4월 30일의 역사적 사건을 간직한 곳입니다.'),
+  (1, 'ja', '統一会堂', 'ホーチミン市1区にある国家特別史跡で、1975年4月30日の歴史的な出来事を今に伝える場所です。')
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  description = VALUES(description);
+
 -- 3 điểm tham quan mẫu cho địa danh 1 (dùng cho bản demo Web Client)
 -- Tọa độ GẦN ĐÚNG trong khuôn viên Dinh Độc Lập, các điểm cách nhau vài chục mét.
 -- Đây chỉ là số ước lượng để hiển thị bản đồ, cần kiểm tra lại nếu dùng chính thức.

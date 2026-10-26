@@ -14,6 +14,7 @@ import { NarrationEditor } from './NarrationEditor';
 import {
   ADMIN_LANGS,
   LANG_LABELS,
+  MAX_NAME_LENGTH,
   createEmptyDrafts,
   validateAudioFile,
   type LangDraft,
@@ -44,15 +45,19 @@ function markLoadError(drafts: LangDrafts, loadError: string): LangDrafts {
   return next;
 }
 
-/** Admin đã sửa văn bản hoặc chọn file mới mà chưa bấm "Lưu". */
+/** Admin đã sửa tên, văn bản hoặc chọn file mới mà chưa bấm "Lưu". */
 function isDraftDirty(draft: LangDraft): boolean {
-  return draft.file !== null || draft.text.trim() !== draft.baselineText.trim();
+  return (
+    draft.file !== null ||
+    draft.name.trim() !== draft.baselineName.trim() ||
+    draft.text.trim() !== draft.baselineText.trim()
+  );
 }
 
 /**
- * Ghép kết quả API07 vào bản nháp của cả 5 ngôn ngữ: điền sẵn văn bản, audio
- * hiện có và dấu "đã có nội dung". Tab đang sửa dở được giữ nguyên để trang
- * làm mới sau mỗi lần lưu không xóa mất phần Admin đang nhập.
+ * Ghép kết quả API07 vào bản nháp của cả 5 ngôn ngữ: điền sẵn tên điểm, văn bản,
+ * audio hiện có và dấu "đã có nội dung". Tab đang sửa dở được giữ nguyên để
+ * trang làm mới sau mỗi lần lưu không xóa mất phần Admin đang nhập.
  */
 function mergeTranslations(
   drafts: LangDrafts,
@@ -65,9 +70,12 @@ function mergeTranslations(
   for (const lang of ADMIN_LANGS) {
     const current = drafts[lang];
     const entry = entries.get(lang);
+    const name = entry?.name ?? '';
     const text = entry?.text ?? '';
     const audioUrl = entry?.audioUrl ?? null;
     const audioChanged = audioUrl !== current.audioUrl;
+    // Admin đang sửa dở thì giữ bản nháp, chỉ cập nhật phần chưa động tới.
+    const dirty = isDraftDirty(current);
 
     next[lang] = {
       ...current,
@@ -75,8 +83,10 @@ function mergeTranslations(
       loadError: null,
       loaded: true,
       hasContent: entry !== undefined && entry.text !== null,
+      baselineName: name,
+      name: dirty ? current.name : name,
       baselineText: text,
-      text: isDraftDirty(current) ? current.text : text,
+      text: dirty ? current.text : text,
       audioUrl,
       audioVersion: audioChanged
         ? current.audioVersion + 1
@@ -215,14 +225,16 @@ export function AdminContentPage() {
 
   const submitTranslation = async (poiId: number, lang: Lang, draft: LangDraft) => {
     const requestId = requestRef.current;
+    const name = draft.name.trim();
+    const text = draft.text.trim();
+
     patchDraft(lang, { saving: true, progress: 0, saveError: null, textError: null });
 
     try {
       const result = await savePoiTranslation(
         poiId,
         lang,
-        draft.text.trim(),
-        draft.file,
+        { name, text, file: draft.file },
         (percent) => {
           if (requestId === requestRef.current) patchDraft(lang, { progress: percent });
         }
@@ -240,6 +252,10 @@ export function AdminContentPage() {
           fileError: null,
           loaded: true,
           hasContent: true,
+          // API08 không trả lại name nên dùng đúng giá trị vừa gửi lên.
+          baselineName: name,
+          name,
+          nameError: null,
           baselineText: result.text,
           text: result.text,
           audioUrl: result.audioUrl,
@@ -279,7 +295,16 @@ export function AdminContentPage() {
       return;
     }
 
-    patchDraft(lang, { textError: null, saveError: null });
+    // Tên điểm không bắt buộc, chỉ giới hạn độ dài (PRD 5.2.3).
+    if (draft.name.trim().length > MAX_NAME_LENGTH) {
+      patchDraft(lang, {
+        nameError: `Tên điểm tối đa ${MAX_NAME_LENGTH} ký tự`,
+        saveError: null,
+      });
+      return;
+    }
+
+    patchDraft(lang, { textError: null, nameError: null, saveError: null });
 
     if (draft.hasContent && !(await requestOverwrite(lang))) return;
 
@@ -303,6 +328,7 @@ export function AdminContentPage() {
     children: (
       <NarrationEditor
         draft={drafts[lang]}
+        onNameChange={(name) => patchDraft(lang, { name, nameError: null })}
         onTextChange={(text) => patchDraft(lang, { text, textError: null })}
         onPickFile={(file) => handlePickFile(lang, file)}
         onClearFile={() => patchDraft(lang, { file: null, fileError: null })}

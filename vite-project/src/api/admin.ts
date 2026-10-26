@@ -160,6 +160,8 @@ export async function deletePoi(poiId: number): Promise<PoiDeleteResponse> {
 /** Nội dung một ngôn ngữ trả về từ API07; ngôn ngữ chưa có nội dung thì null. */
 export interface PoiTranslationEntry {
   lang: Lang;
+  /** Tên điểm theo ngôn ngữ này; chưa đặt thì null (API07). */
+  name: string | null;
   text: string | null;
   audioUrl: string | null;
 }
@@ -182,18 +184,26 @@ export async function fetchPoiTranslations(
   return data;
 }
 
+/** Dữ liệu gửi lên API08 cho một ngôn ngữ. */
+export interface TranslationPayload {
+  /** Tên điểm theo ngôn ngữ; chuỗi rỗng nghĩa là xóa tên (lưu NULL). */
+  name: string;
+  text: string;
+  file: File | null;
+}
+
 /** API08 - PUT multipart/form-data, báo tiến độ tải file (PRD 7.1.5). */
 export async function savePoiTranslation(
   poiId: number,
   lang: Lang,
-  text: string,
-  file: File | null,
+  payload: TranslationPayload,
   onProgress: (percent: number) => void
 ): Promise<TranslationResponse> {
   const form = new FormData();
-  form.append('text', text);
-  if (file) {
-    form.append('audio', file);
+  form.append('name', payload.name);
+  form.append('text', payload.text);
+  if (payload.file) {
+    form.append('audio', payload.file);
   }
 
   const { data } = await adminClient.put<TranslationResponse>(

@@ -17,6 +17,10 @@ export interface UiText {
   loadError: string;
   retry: string;
   chooseLanguage: string;
+  /** Chỉ báo nhỏ khi tải lại địa danh do đổi ngôn ngữ (UC03). */
+  langReloading: string;
+  /** Đổi ngôn ngữ thất bại, vẫn hiện nội dung ngôn ngữ cũ (UC03 - 5b). */
+  langLoadError: string;
   poiListTitle: string;
   startTour: string;
   noPoi: string;
@@ -47,6 +51,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     loadError: 'Không tải được dữ liệu',
     retry: 'Thử lại',
     chooseLanguage: 'Chọn ngôn ngữ',
+    langReloading: 'Đang đổi ngôn ngữ...',
+    langLoadError: 'Không tải được nội dung ngôn ngữ mới',
     poiListTitle: 'Điểm tham quan',
     startTour: 'Bắt đầu tham quan',
     noPoi: 'Địa danh chưa có nội dung',
@@ -75,6 +81,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     loadError: 'Unable to load data',
     retry: 'Retry',
     chooseLanguage: 'Choose language',
+    langReloading: 'Switching language...',
+    langLoadError: 'Unable to load the selected language',
     poiListTitle: 'Points of interest',
     startTour: 'Start the tour',
     noPoi: 'This site has no content yet',
@@ -103,6 +111,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     loadError: '无法加载数据',
     retry: '重试',
     chooseLanguage: '选择语言',
+    langReloading: '正在切换语言...',
+    langLoadError: '无法加载所选语言的内容',
     poiListTitle: '景点',
     startTour: '开始参观',
     noPoi: '该景点暂无内容',
@@ -131,6 +141,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     loadError: '데이터를 불러올 수 없습니다',
     retry: '다시 시도',
     chooseLanguage: '언어 선택',
+    langReloading: '언어를 변경하는 중...',
+    langLoadError: '선택한 언어의 콘텐츠를 불러올 수 없습니다',
     poiListTitle: '관광지',
     startTour: '관람 시작',
     noPoi: '아직 콘텐츠가 없습니다',
@@ -159,6 +171,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     loadError: 'データを読み込めません',
     retry: '再試行',
     chooseLanguage: '言語を選択',
+    langReloading: '言語を切り替えています...',
+    langLoadError: '選択した言語のコンテンツを読み込めません',
     poiListTitle: '見どころ',
     startTour: '見学を始める',
     noPoi: 'この場所にはまだコンテンツがありません',

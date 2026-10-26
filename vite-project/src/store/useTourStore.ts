@@ -38,10 +38,53 @@ interface TourState {
   location: LocationDetail | null;
   status: LoadStatus;
   errorKind: ErrorKind;
+  /** Đang tải lại địa danh do đổi ngôn ngữ; nội dung cũ vẫn hiển thị (UC03). */
+  refreshing: boolean;
+  /** Đổi ngôn ngữ thất bại: giữ ngôn ngữ cũ, hiện thông báo và nút thử lại (5b). */
+  refreshFailed: boolean;
+  /** Ngôn ngữ vừa tải lỗi, dùng cho nút "Thử lại". */
+  failedLang: Lang | null;
   listenedPoiIds: number[];
   setLang: (lang: Lang) => void;
   loadLocation: (locationId: number) => Promise<void>;
+  retryLangReload: () => void;
   markListened: (poiId: number) => void;
+}
+
+// Tăng mỗi lần tải địa danh; phản hồi của lần tải đã bị thay thế thì bỏ qua.
+let requestSeq = 0;
+
+/**
+ * Tải lại địa danh theo ngôn ngữ mới nhưng GIỮ nội dung đang hiển thị (UC03),
+ * nhờ vậy trang không chớp trắng khi du khách đổi ngôn ngữ.
+ */
+async function refreshForLang(
+  locationId: number,
+  target: Lang,
+  previous: Lang,
+  set: (partial: Partial<TourState>) => void,
+  get: () => TourState
+): Promise<void> {
+  const seq = (requestSeq += 1);
+  set({ refreshing: true, refreshFailed: false });
+
+  try {
+    const location = await fetchLocation(locationId, target);
+    if (seq !== requestSeq || get().locationId !== locationId) return;
+
+    set({ location, refreshing: false, refreshFailed: false, failedLang: null });
+  } catch {
+    if (seq !== requestSeq || get().locationId !== locationId) return;
+
+    // UC03 - 5b: mất mạng thì giữ nguyên ngôn ngữ cũ, báo lỗi và cho thử lại.
+    localStorage.setItem(LANG_STORAGE_KEY, previous);
+    set({
+      lang: previous,
+      refreshing: false,
+      refreshFailed: true,
+      failedLang: target,
+    });
+  }
 }
 
 /**
@@ -54,41 +97,75 @@ export const useTourStore = create<TourState>()((set, get) => ({
   location: null,
   status: 'idle',
   errorKind: null,
+  refreshing: false,
+  refreshFailed: false,
+  failedLang: null,
   listenedPoiIds: [],
 
   setLang: (lang) => {
+    const current = get();
+    if (lang === current.lang) return;
+
     localStorage.setItem(LANG_STORAGE_KEY, lang);
+
+    // Chưa có dữ liệu địa danh: chỉ đổi ngôn ngữ giao diện, lần tải sau dùng ?lang mới.
+    if (current.locationId === null || current.location === null || current.status !== 'ready') {
+      set({ lang, refreshFailed: false, failedLang: null });
+      return;
+    }
+
+    // API02 trả tên/mô tả địa danh và tên điểm theo ?lang nên phải tải lại.
     set({ lang });
+    void refreshForLang(current.locationId, lang, current.lang, set, get);
+  },
+
+  retryLangReload: () => {
+    const { locationId, failedLang, lang } = get();
+    const target = failedLang ?? lang;
+    if (locationId === null) return;
+
+    localStorage.setItem(LANG_STORAGE_KEY, target);
+    set({ lang: target });
+    void refreshForLang(locationId, target, target, set, get);
   },
 
   loadLocation: async (locationId) => {
     if (!Number.isInteger(locationId) || locationId <= 0) {
+      requestSeq += 1;
       set({
         locationId: null,
         location: null,
         status: 'error',
         errorKind: 'invalid',
+        refreshing: false,
+        refreshFailed: false,
+        failedLang: null,
         listenedPoiIds: [],
       });
       return;
     }
 
     sessionStorage.setItem(LOCATION_STORAGE_KEY, String(locationId));
+    const seq = (requestSeq += 1);
     set({
       locationId,
+      location: null,
       status: 'loading',
       errorKind: null,
+      refreshing: false,
+      refreshFailed: false,
+      failedLang: null,
       listenedPoiIds: readListenedPoiIds(locationId),
     });
 
     try {
-      const location = await fetchLocation(locationId);
+      const location = await fetchLocation(locationId, get().lang);
       // Bỏ qua kết quả của địa danh cũ khi người dùng đã đổi QR khác.
-      if (get().locationId !== locationId) return;
+      if (seq !== requestSeq || get().locationId !== locationId) return;
 
       set({ location, status: 'ready', errorKind: null });
     } catch (error) {
-      if (get().locationId !== locationId) return;
+      if (seq !== requestSeq || get().locationId !== locationId) return;
 
       set({
         location: null,

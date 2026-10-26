@@ -65,6 +65,7 @@ interface PoiDetailRow extends RowDataPacket {
 
 interface TranslationRow extends RowDataPacket {
   lang: SupportedLang;
+  name: string | null;
   narration_text: string;
   audio_url: string | null;
 }
@@ -75,9 +76,10 @@ export interface TranslationContent {
   audioUrl: string | null;
 }
 
-/** Một ngôn ngữ trong kết quả API07; chưa có nội dung thì text và audioUrl là null. */
+/** Một ngôn ngữ trong kết quả API07; chưa có nội dung thì text, audioUrl, name là null. */
 export interface PoiTranslationEntry {
   lang: SupportedLang;
+  name: string | null;
   text: string | null;
   audioUrl: string | null;
 }
@@ -98,7 +100,7 @@ async function findTranslation(
   lang: SupportedLang
 ): Promise<TranslationRow | null> {
   const [rows] = await pool.query<TranslationRow[]>(
-    `SELECT lang, narration_text, audio_url
+    `SELECT lang, name, narration_text, audio_url
        FROM poi_translations
       WHERE poi_id = ? AND lang = ?
       LIMIT 1`,
@@ -106,6 +108,16 @@ async function findTranslation(
   );
 
   return rows[0] ?? null;
+}
+
+/** Bản dịch tên điểm để trống hoặc chưa có thì coi như null. */
+function normalizeName(name: string | null): string | null {
+  return name !== null && name.trim() !== '' ? name : null;
+}
+
+/** Tên điểm theo ngôn ngữ; thiếu bản dịch thì dùng tên gốc trong `pois.name`. */
+function pickTranslatedName(name: string | null, originalName: string): string {
+  return normalizeName(name) ?? originalName;
 }
 
 /**
@@ -129,7 +141,7 @@ export async function findPoiNarration(
   if (translation) {
     return {
       poiId: poi.id,
-      name: poi.name,
+      name: pickTranslatedName(translation.name, poi.name),
       lang: translation.lang,
       text: translation.narration_text,
       audioUrl: translation.audio_url,
@@ -143,7 +155,8 @@ export async function findPoiNarration(
     if (vietnamese) {
       return {
         poiId: poi.id,
-        name: poi.name,
+        // Tên đi theo ngôn ngữ thực sự trả về (vi), thiếu thì dùng tên gốc.
+        name: pickTranslatedName(vietnamese.name, poi.name),
         lang: 'vi',
         text: vietnamese.narration_text,
         audioUrl: vietnamese.audio_url,
@@ -304,7 +317,7 @@ export async function deletePoiWithTranslations(
     }
 
     const [translationRows] = await connection.query<TranslationRow[]>(
-      'SELECT lang, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
+      'SELECT lang, name, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
       [poiId]
     );
 
@@ -328,13 +341,13 @@ export async function deletePoiWithTranslations(
 /**
  * Nội dung của một điểm ở tất cả ngôn ngữ (API07 - UC09).
  * Luôn trả đủ 5 ngôn ngữ theo thứ tự vi, en, zh, ko, ja; ngôn ngữ chưa có
- * nội dung thì text và audioUrl là null (PRD 6.2).
+ * nội dung thì text, audioUrl và name là null (PRD 6.2).
  */
 export async function findPoiTranslations(
   poiId: number
 ): Promise<PoiTranslations> {
   const [rows] = await pool.query<TranslationRow[]>(
-    'SELECT lang, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
+    'SELECT lang, name, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
     [poiId]
   );
 
@@ -353,8 +366,13 @@ export async function findPoiTranslations(
       const row = byLang.get(lang);
 
       return row
-        ? { lang, text: row.narration_text, audioUrl: row.audio_url }
-        : { lang, text: null, audioUrl: null };
+        ? {
+            lang,
+            name: normalizeName(row.name),
+            text: row.narration_text,
+            audioUrl: row.audio_url,
+          }
+        : { lang, name: null, text: null, audioUrl: null };
     }),
   };
 }
@@ -372,19 +390,23 @@ export async function findTranslationContent(
 /**
  * Lưu hoặc ghi đè nội dung thuyết minh của một điểm theo ngôn ngữ (API08 - UC09).
  * `audioUrl` = null nghĩa là Admin không tải file mới -> giữ nguyên audio cũ.
+ * `name` = undefined nghĩa là Admin không gửi trường name -> giữ nguyên tên cũ;
+ * `name` = null nghĩa là gửi chuỗi rỗng -> lưu NULL.
  */
 export async function saveTranslation(
   poiId: number,
   lang: SupportedLang,
   text: string,
-  audioUrl: string | null
+  audioUrl: string | null,
+  name: string | null | undefined
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO poi_translations (poi_id, lang, narration_text, audio_url)
-     VALUES (?, ?, ?, ?)
+    `INSERT INTO poi_translations (poi_id, lang, narration_text, audio_url, name)
+     VALUES (?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        narration_text = VALUES(narration_text),
-       audio_url = COALESCE(VALUES(audio_url), audio_url)`,
-    [poiId, lang, text, audioUrl]
+       audio_url = COALESCE(VALUES(audio_url), audio_url),
+       name = IF(?, VALUES(name), name)`,
+    [poiId, lang, text, audioUrl, name ?? null, name === undefined ? 0 : 1]
   );
 }

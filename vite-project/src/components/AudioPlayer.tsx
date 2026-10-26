@@ -8,7 +8,8 @@ interface Props {
   /** Chỉ tự phát khi du khách vừa chọn điểm; đổi ngôn ngữ thì không tự phát. */
   autoPlay: boolean;
   text: UiText;
-  onEnded: () => void;
+  /** Audio bắt đầu phát thật sự (không tính lúc bị trình duyệt chặn). */
+  onStarted: () => void;
 }
 
 /** idle: chưa phát, paused: tạm dừng, ended: đã nghe xong (PRD 2.7.4). */
@@ -26,7 +27,7 @@ function formatTime(seconds: number): string {
  * Trình phát thuyết minh (UC05 - PRD 7.1.2): thẻ audio HTML5 kèm nút bấm
  * Tạm dừng / Phát tiếp / Nghe lại, thanh tiến độ và các trạng thái lỗi.
  */
-export function AudioPlayer({ src, autoPlay, text, onEnded }: Props) {
+export function AudioPlayer({ src, autoPlay, text, onStarted }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<PlayerState>('idle');
   const [currentTime, setCurrentTime] = useState(0);
@@ -99,14 +100,16 @@ export function AudioPlayer({ src, autoPlay, text, onEnded }: Props) {
         ref={audioRef}
         src={src}
         preload="auto"
-        onPlay={() => setState('playing')}
+        onPlay={() => {
+          setState('playing');
+          // PRD UC04/UC10: điểm được đánh dấu đã nghe ngay khi bắt đầu phát,
+          // không phải chờ hết file ("đã nghe xong" chỉ là trạng thái trình phát).
+          onStarted();
+        }}
         onPause={() => setState((prev) => (prev === 'playing' ? 'paused' : prev))}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-        onEnded={() => {
-          setState('ended');
-          onEnded();
-        }}
+        onEnded={() => setState('ended')}
         onError={() => setState('error')}
       />
 
