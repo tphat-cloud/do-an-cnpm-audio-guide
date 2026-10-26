@@ -1,7 +1,7 @@
-import type { PoiCreateInput } from './poi.repository';
+import type { PoiCreateInput, PoiUpdateInput } from './poi.repository';
 
 /**
- * Kiểm tra dữ liệu thêm điểm tham quan (PRD 3.3.8, 6.2 - API04).
+ * Kiểm tra dữ liệu thêm/sửa điểm tham quan (PRD 3.3.8, 6.2 - API04, API05).
  *
  * Gom toàn bộ lỗi vào một object `errors` theo tên trường để frontend báo
  * đúng ô nhập. Phạm vi giá trị theo PRD: vĩ độ -90..90, kinh độ -180..180,
@@ -12,6 +12,11 @@ export type PoiFieldErrors = Record<string, string>;
 
 export interface PoiValidationResult {
   input: PoiCreateInput | null;
+  errors: PoiFieldErrors;
+}
+
+export interface PoiUpdateValidationResult {
+  input: PoiUpdateInput | null;
   errors: PoiFieldErrors;
 }
 
@@ -109,14 +114,20 @@ function parseName(value: unknown): { value: string; valid: boolean } {
   return { value: name, valid: true };
 }
 
-export function validatePoiCreate(body: unknown): PoiValidationResult {
-  const payload = (body ?? {}) as Record<string, unknown>;
-  const errors: PoiFieldErrors = {};
+/** Các trường chung của API04 và API05 (PRD 3.3.8, 6.2). */
+interface PoiFields {
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusM: number;
+  orderIndex: number;
+}
 
-  const locationId = parseRequiredId(payload.locationId);
-  if (!locationId.valid) {
-    errors.locationId = 'Vui lòng chọn địa danh';
-  }
+function validatePoiFields(payload: Record<string, unknown>): {
+  fields: PoiFields;
+  errors: PoiFieldErrors;
+} {
+  const errors: PoiFieldErrors = {};
 
   const name = parseName(payload.name);
   if (!name.valid) {
@@ -160,13 +171,8 @@ export function validatePoiCreate(body: unknown): PoiValidationResult {
     errors.orderIndex = 'Thứ tự phải là số nguyên không âm';
   }
 
-  if (Object.keys(errors).length > 0) {
-    return { input: null, errors };
-  }
-
   return {
-    input: {
-      locationId: locationId.value,
+    fields: {
       name: name.value,
       latitude: latitude.value,
       longitude: longitude.value,
@@ -175,4 +181,38 @@ export function validatePoiCreate(body: unknown): PoiValidationResult {
     },
     errors,
   };
+}
+
+export function validatePoiCreate(body: unknown): PoiValidationResult {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const { fields, errors } = validatePoiFields(payload);
+
+  const locationId = parseRequiredId(payload.locationId);
+  if (!locationId.valid) {
+    errors.locationId = 'Vui lòng chọn địa danh';
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { input: null, errors };
+  }
+
+  return {
+    input: { locationId: locationId.value, ...fields },
+    errors,
+  };
+}
+
+/**
+ * API05: cùng quy tắc kiểm tra như API04, chỉ khác không có locationId -
+ * điểm giữ nguyên địa danh mà nó đang thuộc về.
+ */
+export function validatePoiUpdate(body: unknown): PoiUpdateValidationResult {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const { fields, errors } = validatePoiFields(payload);
+
+  if (Object.keys(errors).length > 0) {
+    return { input: null, errors };
+  }
+
+  return { input: fields, errors };
 }

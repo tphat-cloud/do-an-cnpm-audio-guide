@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { apiClient, readHttpStatus } from './client';
 import { clearAdminSession, readAdminToken } from './adminToken';
-import type { Lang, LocationDetail, PoiNarration } from '../types';
+import type { Lang, LocationDetail } from '../types';
 
 /**
- * API quản trị (PRD 6.2 - API01, API04, API08).
+ * API quản trị (PRD 6.2 - API01, API04, API05, API06, API07, API08).
  * Dùng axios riêng để mọi yêu cầu tự gắn Bearer token và tự xử lý 401,
  * không ảnh hưởng tới các lời gọi công khai của Web Client.
  */
@@ -32,9 +32,18 @@ export interface PoiCreatePayload {
   orderIndex: number;
 }
 
-/** Điểm tham quan sau khi lưu (API04). */
+/** Điểm tham quan sau khi lưu (API04, API05). */
 export interface PoiDetail extends PoiCreatePayload {
   id: number;
+}
+
+/** Dữ liệu gửi lên API05: như API04 nhưng không có locationId. */
+export type PoiUpdatePayload = Omit<PoiCreatePayload, 'locationId'>;
+
+/** Kết quả xóa điểm tham quan (API06). */
+export interface PoiDeleteResponse {
+  message: string;
+  deletedTranslations: number;
 }
 
 /** Kết quả lưu nội dung một ngôn ngữ (API08). */
@@ -128,17 +137,48 @@ export async function createPoi(payload: PoiCreatePayload): Promise<PoiDetail> {
   return data;
 }
 
-/**
- * API03 - đọc nội dung hiện có để điền sẵn biểu mẫu (UC09).
- * `fallback: true` nghĩa là ngôn ngữ này chưa có nội dung riêng.
- */
-export async function fetchPoiContent(
+/** API05 - PUT /api/content/pois/:id (UC08). */
+export async function updatePoi(
   poiId: number,
-  lang: Lang
-): Promise<PoiNarration> {
-  const { data } = await adminClient.get<PoiNarration>(`/content/pois/${poiId}`, {
-    params: { lang },
-  });
+  payload: PoiUpdatePayload
+): Promise<PoiDetail> {
+  const { data } = await adminClient.put<PoiDetail>(
+    `/content/pois/${poiId}`,
+    payload
+  );
+  return data;
+}
+
+/** API06 - DELETE /api/content/pois/:id (UC08), xóa luôn nội dung và audio. */
+export async function deletePoi(poiId: number): Promise<PoiDeleteResponse> {
+  const { data } = await adminClient.delete<PoiDeleteResponse>(
+    `/content/pois/${poiId}`
+  );
+  return data;
+}
+
+/** Nội dung một ngôn ngữ trả về từ API07; ngôn ngữ chưa có nội dung thì null. */
+export interface PoiTranslationEntry {
+  lang: Lang;
+  text: string | null;
+  audioUrl: string | null;
+}
+
+export interface PoiTranslationsResponse {
+  poiId: number;
+  translations: PoiTranslationEntry[];
+}
+
+/**
+ * API07 - GET /api/content/pois/:id/translations (UC09).
+ * Trả đủ 5 ngôn ngữ trong một lời gọi, dùng để điền sẵn cả 5 tab.
+ */
+export async function fetchPoiTranslations(
+  poiId: number
+): Promise<PoiTranslationsResponse> {
+  const { data } = await adminClient.get<PoiTranslationsResponse>(
+    `/content/pois/${poiId}/translations`
+  );
   return data;
 }
 

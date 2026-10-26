@@ -3,10 +3,11 @@ import { Alert, App, Button, Empty, Result, Select, Spin, Tabs, Typography } fro
 import { CheckCircleFilled, ReloadOutlined } from '@ant-design/icons';
 import {
   fetchAdminLocation,
-  fetchPoiContent,
+  fetchPoiTranslations,
   readApiError,
   savePoiTranslation,
 } from '../../api/admin';
+import type { PoiTranslationsResponse } from '../../api/admin';
 import { readHttpStatus } from '../../api/client';
 import type { Lang, PoiSummary } from '../../types';
 import { NarrationEditor } from './NarrationEditor';
@@ -21,12 +22,77 @@ import {
 
 type ListStatus = 'loading' | 'ready' | 'error';
 
+/** Đánh dấu cả 5 tab đang chờ API07. */
+function markLoading(drafts: LangDrafts): LangDrafts {
+  const next = { ...drafts };
+
+  for (const lang of ADMIN_LANGS) {
+    next[lang] = { ...drafts[lang], loading: true, loadError: null };
+  }
+
+  return next;
+}
+
+/** Báo lỗi tải cho cả 5 tab, vì API07 lấy một lần cho toàn bộ ngôn ngữ. */
+function markLoadError(drafts: LangDrafts, loadError: string): LangDrafts {
+  const next = { ...drafts };
+
+  for (const lang of ADMIN_LANGS) {
+    next[lang] = { ...drafts[lang], loading: false, loadError };
+  }
+
+  return next;
+}
+
+/** Admin đã sửa văn bản hoặc chọn file mới mà chưa bấm "Lưu". */
+function isDraftDirty(draft: LangDraft): boolean {
+  return draft.file !== null || draft.text.trim() !== draft.baselineText.trim();
+}
+
+/**
+ * Ghép kết quả API07 vào bản nháp của cả 5 ngôn ngữ: điền sẵn văn bản, audio
+ * hiện có và dấu "đã có nội dung". Tab đang sửa dở được giữ nguyên để trang
+ * làm mới sau mỗi lần lưu không xóa mất phần Admin đang nhập.
+ */
+function mergeTranslations(
+  drafts: LangDrafts,
+  data: PoiTranslationsResponse
+): LangDrafts {
+  const entries = new Map(data.translations.map((item) => [item.lang, item]));
+  const next = { ...drafts };
+
+  // Duyệt theo 5 tab để tab nào cũng được cập nhật, kể cả khi API07 thiếu ngôn ngữ.
+  for (const lang of ADMIN_LANGS) {
+    const current = drafts[lang];
+    const entry = entries.get(lang);
+    const text = entry?.text ?? '';
+    const audioUrl = entry?.audioUrl ?? null;
+    const audioChanged = audioUrl !== current.audioUrl;
+
+    next[lang] = {
+      ...current,
+      loading: false,
+      loadError: null,
+      loaded: true,
+      hasContent: entry !== undefined && entry.text !== null,
+      baselineText: text,
+      text: isDraftDirty(current) ? current.text : text,
+      audioUrl,
+      audioVersion: audioChanged
+        ? current.audioVersion + 1
+        : current.audioVersion,
+    };
+  }
+
+  return next;
+}
+
 /**
  * Quản lý nội dung thuyết minh (PRD 7.1.5 - UC09).
  *
- * Chưa có API07 nên mỗi tab gọi API03 đúng ngôn ngữ để điền sẵn; `fallback: true`
- * nghĩa là ngôn ngữ đó chưa có nội dung nên để trống. Lưu bằng API08 (multipart),
- * hỏi "Ghi đè nội dung hiện có?" khi ngôn ngữ đã có nội dung.
+ * Chọn điểm là gọi API07 một lần để lấy cả 5 ngôn ngữ: tab đã có nội dung hiện
+ * dấu tích, điền sẵn văn bản và audio hiện có. Lưu bằng API08 (multipart) rồi
+ * gọi lại API07; hỏi "Ghi đè nội dung hiện có?" khi ngôn ngữ đã có nội dung.
  */
 export function AdminContentPage() {
   const { message, modal } = App.useApp();
@@ -37,9 +103,7 @@ export function AdminContentPage() {
   const [activeLang, setActiveLang] = useState<Lang>('vi');
   const [drafts, setDrafts] = useState<LangDrafts>(createEmptyDrafts);
 
-  // Ngôn ngữ đã gọi API03 của điểm đang chọn; đổi điểm thì xóa dấu.
-  const loadedRef = useRef<Partial<Record<Lang, boolean>>>({});
-  // Tăng mỗi lần đổi điểm để bỏ qua kết quả trả về muộn của điểm cũ.
+  // Tăng mỗi lần đổi điểm để bỏ qua kết quả API07 trả về muộn của điểm cũ.
   const requestRef = useRef(0);
 
   const patchDraft = useCallback((lang: Lang, patch: Partial<LangDraft>) => {
@@ -72,60 +136,60 @@ export function AdminContentPage() {
     loadPois();
   };
 
-  const loadNarration = useCallback(
-    async (poiId: number, lang: Lang, force = false) => {
-      if (!force && loadedRef.current[lang]) return;
+  // API07: lấy cả 5 ngôn ngữ trong một lời gọi khi chọn điểm hoặc bấm "Thử lại".
+  const loadTranslations = useCallback(async (poiId: number) => {
+    const requestId = requestRef.current;
+    setDrafts((prev) => markLoading(prev));
 
-      loadedRef.current[lang] = true;
-      const requestId = requestRef.current;
-      patchDraft(lang, { loading: true, loadError: null });
+    try {
+      const data = await fetchPoiTranslations(poiId);
+      if (requestId !== requestRef.current) return;
 
-      try {
-        const data = await fetchPoiContent(poiId, lang);
-        if (requestId !== requestRef.current) return;
+      setDrafts((prev) => mergeTranslations(prev, data));
+    } catch (error) {
+      if (requestId !== requestRef.current) return;
 
-        // fallback: true -> ngôn ngữ này chưa có nội dung riêng, để trống.
-        const hasContent = !data.fallback;
-        patchDraft(lang, {
-          loading: false,
-          loaded: true,
-          hasContent,
-          text: hasContent ? data.text : '',
-          audioUrl: hasContent ? data.audioUrl : null,
-        });
-      } catch (error) {
-        if (requestId !== requestRef.current) return;
+      setDrafts((prev) =>
+        markLoadError(
+          prev,
+          readHttpStatus(error) === 404
+            ? 'Không tìm thấy điểm tham quan'
+            : 'Không tải được nội dung, vui lòng thử lại'
+        )
+      );
+    }
+  }, []);
 
-        loadedRef.current[lang] = false;
-        patchDraft(lang, {
-          loading: false,
-          loadError:
-            readHttpStatus(error) === 404
-              ? 'Không tìm thấy điểm tham quan'
-              : 'Không tải được nội dung, vui lòng thử lại',
-        });
-      }
-    },
-    [patchDraft]
-  );
+  // Sau khi lưu: gọi lại API07 nhưng không bật vòng xoay để không nhấp nháy.
+  const refreshTranslations = useCallback(async (poiId: number) => {
+    const requestId = requestRef.current;
 
-  // Chọn điểm thì tải tiếng Việt trước (để biết đã có bản dự phòng chưa);
-  // sau đó mở tab nào mới gọi API03 cho ngôn ngữ của tab đó.
+    try {
+      const data = await fetchPoiTranslations(poiId);
+      if (requestId !== requestRef.current) return;
+
+      setDrafts((prev) => mergeTranslations(prev, data));
+    } catch {
+      // Làm mới thất bại: giữ nội dung vừa lưu ở cục bộ, không báo lỗi thêm.
+    }
+  }, []);
+
+  // Đổi điểm thì xóa bản nháp cũ và nạp lại cả 5 tab bằng API07.
   const handleSelectPoi = (poiId: number) => {
     requestRef.current += 1;
-    loadedRef.current = {};
     setSelectedPoiId(poiId);
     setDrafts(createEmptyDrafts());
     setActiveLang('vi');
-    void loadNarration(poiId, 'vi');
+    void loadTranslations(poiId);
   };
 
   const handleTabChange = (key: string) => {
-    const lang = key as Lang;
-    setActiveLang(lang);
-    if (selectedPoiId !== null) {
-      void loadNarration(selectedPoiId, lang);
-    }
+    // API07 đã nạp sẵn cả 5 ngôn ngữ nên đổi tab chỉ cần đổi tab đang mở.
+    setActiveLang(key as Lang);
+  };
+
+  const retryLoad = () => {
+    if (selectedPoiId !== null) void loadTranslations(selectedPoiId);
   };
 
   const handlePickFile = (lang: Lang, file: File) => {
@@ -176,11 +240,16 @@ export function AdminContentPage() {
           fileError: null,
           loaded: true,
           hasContent: true,
+          baselineText: result.text,
+          text: result.text,
           audioUrl: result.audioUrl,
           audioVersion: prev[lang].audioVersion + 1,
         },
       }));
       message.success('Đã lưu nội dung thuyết minh');
+
+      // API07: cập nhật lại dấu tích và audio của cả 5 ngôn ngữ theo CSDL.
+      void refreshTranslations(poiId);
     } catch (error) {
       if (requestId !== requestRef.current) return;
       // 401 đã được interceptor xử lý: xóa phiên và chuyển về trang đăng nhập.
@@ -240,9 +309,7 @@ export function AdminContentPage() {
         onSave={() => {
           void handleSave(lang);
         }}
-        onRetryLoad={() => {
-          if (selectedPoiId !== null) void loadNarration(selectedPoiId, lang, true);
-        }}
+        onRetryLoad={retryLoad}
         onRetrySave={() => {
           if (selectedPoiId === null) return;
           void submitTranslation(selectedPoiId, lang, drafts[lang]);

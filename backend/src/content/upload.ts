@@ -119,3 +119,38 @@ export async function discardAudioFile(req: Request): Promise<void> {
     console.error('Không xóa được file audio tạm:', error);
   });
 }
+
+/**
+ * Đổi đường dẫn công khai (/uploads/audio/<tên file>) thành đường dẫn file.
+ * Trả null nếu giá trị không trỏ vào thư mục audio, để không xóa nhầm file khác.
+ */
+function audioUrlToFilePath(audioUrl: string): string | null {
+  const prefix = `${AUDIO_URL_PREFIX}/`;
+
+  if (!audioUrl.startsWith(prefix)) return null;
+
+  const fileName = audioUrl.slice(prefix.length);
+
+  if (fileName === '' || path.basename(fileName) !== fileName) return null;
+
+  return path.join(AUDIO_DIR, fileName);
+}
+
+/**
+ * Xóa file audio của điểm vừa xóa (API06, PRD 2.7.3 - xóa điểm thì xóa luôn
+ * audio). Chỉ gọi sau khi xóa CSDL thành công; file không còn tồn tại thì bỏ
+ * qua, không báo lỗi.
+ */
+export async function removeAudioFile(audioUrl: string): Promise<void> {
+  const filePath = audioUrlToFilePath(audioUrl);
+
+  if (!filePath) return;
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      console.error(`Không xóa được file audio ${filePath}:`, error);
+    }
+  }
+}

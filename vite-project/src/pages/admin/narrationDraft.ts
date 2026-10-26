@@ -16,14 +16,16 @@ export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 /** Bản nháp nội dung của một ngôn ngữ trong trang quản lý thuyết minh. */
 export interface LangDraft {
-  /** Đang gọi API03 để điền sẵn. */
+  /** Đang gọi API07 để điền sẵn cả 5 ngôn ngữ. */
   loading: boolean;
   loadError: string | null;
-  /** Đã gọi API03 xong (kể cả khi ngôn ngữ chưa có nội dung). */
+  /** Đã nạp xong từ API07 (kể cả khi ngôn ngữ chưa có nội dung). */
   loaded: boolean;
   /** Ngôn ngữ này đã có nội dung trong CSDL -> hiện dấu tích và hỏi ghi đè. */
   hasContent: boolean;
   text: string;
+  /** Văn bản đang lưu trong CSDL, dùng để biết Admin đã sửa dở chưa. */
+  baselineText: string;
   audioUrl: string | null;
   /** Tăng sau mỗi lần lưu để trình nghe thử tải lại file mới. */
   audioVersion: number;
@@ -44,6 +46,7 @@ export function createEmptyDraft(): LangDraft {
     loaded: false,
     hasContent: false,
     text: '',
+    baselineText: '',
     audioUrl: null,
     audioVersion: 0,
     file: null,

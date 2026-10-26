@@ -44,6 +44,15 @@ export interface PoiCreateInput {
   orderIndex: number;
 }
 
+/** Dữ liệu đã kiểm tra hợp lệ để sửa điểm tham quan (API05, không có locationId). */
+export interface PoiUpdateInput {
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusM: number;
+  orderIndex: number;
+}
+
 interface PoiDetailRow extends RowDataPacket {
   id: number;
   location_id: number;
@@ -64,6 +73,24 @@ interface TranslationRow extends RowDataPacket {
 export interface TranslationContent {
   text: string;
   audioUrl: string | null;
+}
+
+/** Một ngôn ngữ trong kết quả API07; chưa có nội dung thì text và audioUrl là null. */
+export interface PoiTranslationEntry {
+  lang: SupportedLang;
+  text: string | null;
+  audioUrl: string | null;
+}
+
+export interface PoiTranslations {
+  poiId: number;
+  translations: PoiTranslationEntry[];
+}
+
+/** Kết quả xóa điểm tham quan: số dòng nội dung đã xóa và audio cần dọn. */
+export interface DeletedPoiResult {
+  deletedTranslations: number;
+  audioUrls: string[];
 }
 
 async function findTranslation(
@@ -173,14 +200,19 @@ export async function locationExists(locationId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
-/** Trùng tên điểm trong cùng một địa danh (ràng buộc uq_pois_location_name). */
+/**
+ * Trùng tên điểm trong cùng một địa danh (ràng buộc uq_pois_location_name).
+ * `excludePoiId` dùng cho API05: giữ nguyên tên của chính điểm đang sửa thì
+ * không tính là trùng.
+ */
 export async function isPoiNameTaken(
   locationId: number,
-  name: string
+  name: string,
+  excludePoiId?: number
 ): Promise<boolean> {
   const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT id FROM pois WHERE location_id = ? AND name = ? LIMIT 1',
-    [locationId, name]
+    'SELECT id FROM pois WHERE location_id = ? AND name = ? AND id <> ? LIMIT 1',
+    [locationId, name, excludePoiId ?? 0]
   );
 
   return rows.length > 0;
@@ -214,6 +246,117 @@ export async function createPoi(input: PoiCreateInput): Promise<PoiDetail> {
 /** MySQL báo trùng khóa duy nhất (ER_DUP_ENTRY) - dùng để trả 409. */
 export function isDuplicateEntryError(error: unknown): boolean {
   return (error as { code?: string }).code === 'ER_DUP_ENTRY';
+}
+
+/**
+ * Sửa điểm tham quan và trả lại bản ghi sau khi sửa (API05 - UC08).
+ * Không đổi location_id: địa danh của điểm do API04 quyết định.
+ */
+export async function updatePoi(
+  poiId: number,
+  input: PoiUpdateInput
+): Promise<PoiDetail> {
+  await pool.query(
+    `UPDATE pois
+        SET name = ?, latitude = ?, longitude = ?, radius_m = ?, order_index = ?
+      WHERE id = ?`,
+    [
+      input.name,
+      input.latitude,
+      input.longitude,
+      input.radiusM,
+      input.orderIndex,
+      poiId,
+    ]
+  );
+
+  // Đọc lại từ CSDL để trả đúng giá trị đã lưu (DECIMAL, updated_at).
+  const poi = await findPoiById(poiId);
+
+  if (!poi) {
+    throw new Error(`Không đọc lại được điểm vừa sửa (id=${poiId})`);
+  }
+
+  return poi;
+}
+
+/**
+ * Xóa điểm tham quan (API06 - UC08). Các dòng poi_translations bị xóa theo
+ * nhờ ON DELETE CASCADE, nên phải đọc audio_url trước khi xóa để còn dọn file.
+ * Trả null nếu điểm không tồn tại.
+ */
+export async function deletePoiWithTranslations(
+  poiId: number
+): Promise<DeletedPoiResult | null> {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [poiRows] = await connection.query<RowDataPacket[]>(
+      'SELECT id FROM pois WHERE id = ? FOR UPDATE',
+      [poiId]
+    );
+
+    if (poiRows.length === 0) {
+      await connection.rollback();
+      return null;
+    }
+
+    const [translationRows] = await connection.query<TranslationRow[]>(
+      'SELECT lang, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
+      [poiId]
+    );
+
+    await connection.query('DELETE FROM pois WHERE id = ?', [poiId]);
+    await connection.commit();
+
+    return {
+      deletedTranslations: translationRows.length,
+      audioUrls: translationRows
+        .map((row) => row.audio_url)
+        .filter((url): url is string => url !== null && url !== ''),
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Nội dung của một điểm ở tất cả ngôn ngữ (API07 - UC09).
+ * Luôn trả đủ 5 ngôn ngữ theo thứ tự vi, en, zh, ko, ja; ngôn ngữ chưa có
+ * nội dung thì text và audioUrl là null (PRD 6.2).
+ */
+export async function findPoiTranslations(
+  poiId: number
+): Promise<PoiTranslations> {
+  const [rows] = await pool.query<TranslationRow[]>(
+    'SELECT lang, narration_text, audio_url FROM poi_translations WHERE poi_id = ?',
+    [poiId]
+  );
+
+  const byLang = new Map<SupportedLang, TranslationRow>();
+
+  for (const row of rows) {
+    // Bỏ qua mã ngôn ngữ lạ nếu CSDL bị sửa tay ngoài 5 ngôn ngữ hỗ trợ.
+    if (isSupportedLang(row.lang)) {
+      byLang.set(row.lang, row);
+    }
+  }
+
+  return {
+    poiId,
+    translations: SUPPORTED_LANGS.map((lang) => {
+      const row = byLang.get(lang);
+
+      return row
+        ? { lang, text: row.narration_text, audioUrl: row.audio_url }
+        : { lang, text: null, audioUrl: null };
+    }),
+  };
 }
 
 /** Nội dung thuyết minh hiện có của một điểm theo ngôn ngữ (dùng cho API08). */

@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { Alert, App, Button, Col, Form, Input, InputNumber, Modal, Row } from 'antd';
-import { ADMIN_LOCATION_ID, createPoi, readApiError } from '../../api/admin';
+import {
+  ADMIN_LOCATION_ID,
+  createPoi,
+  readApiError,
+  updatePoi,
+} from '../../api/admin';
 import { readHttpStatus } from '../../api/client';
+import type { PoiSummary } from '../../types';
 
-interface AddPoiModalProps {
+interface PoiFormModalProps {
   open: boolean;
+  /** null: thêm điểm mới (API04); có giá trị: sửa điểm đó (API05). */
+  poi: PoiSummary | null;
   defaultOrderIndex: number;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
 }
 
 interface PoiFormValues {
@@ -18,7 +26,7 @@ interface PoiFormValues {
   longitude: number | null;
 }
 
-/** Các ô có thể nhận lỗi theo trường từ API04. */
+/** Các ô có thể nhận lỗi theo trường từ API04/API05. */
 const KNOWN_FIELDS: ReadonlySet<keyof PoiFormValues> = new Set([
   'name',
   'radiusM',
@@ -30,20 +38,23 @@ const KNOWN_FIELDS: ReadonlySet<keyof PoiFormValues> = new Set([
 const DEFAULT_RADIUS_M = 10;
 
 /**
- * Hộp thoại "Thêm điểm" (PRD 7.1.4 - UC08).
- * Chưa có bản đồ: Admin nhập tay vĩ độ/kinh độ. Lỗi theo trường từ API04
- * được hiện ngay tại ô tương ứng; lỗi mạng giữ nguyên dữ liệu và có nút "Thử lại".
+ * Hộp thoại Thêm/Sửa điểm tham quan (PRD 7.1.4 - UC08), dùng chung cho API04
+ * và API05. Chưa có bản đồ: Admin nhập tay vĩ độ/kinh độ. Lỗi theo trường được
+ * hiện ngay tại ô tương ứng; lỗi mạng giữ nguyên dữ liệu và có nút "Thử lại".
  */
-export function AddPoiModal({
+export function PoiFormModal({
   open,
+  poi,
   defaultOrderIndex,
   onClose,
-  onCreated,
-}: AddPoiModalProps) {
+  onSaved,
+}: PoiFormModalProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm<PoiFormValues>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const isEdit = poi !== null;
 
   // Đóng hộp thoại thì xóa lỗi cũ; lần mở sau biểu mẫu được tạo lại với giá trị mặc định.
   const handleClose = () => {
@@ -61,21 +72,28 @@ export function AddPoiModal({
       return;
     }
 
+    const payload = {
+      name: values.name.trim(),
+      latitude: values.latitude,
+      longitude: values.longitude,
+      radiusM: values.radiusM,
+      orderIndex: values.orderIndex,
+    };
+
     setSubmitting(true);
     setSubmitError(null);
 
     try {
-      await createPoi({
-        locationId: ADMIN_LOCATION_ID,
-        name: values.name.trim(),
-        latitude: values.latitude,
-        longitude: values.longitude,
-        radiusM: values.radiusM,
-        orderIndex: values.orderIndex,
-      });
+      if (poi === null) {
+        await createPoi({ locationId: ADMIN_LOCATION_ID, ...payload });
+      } else {
+        await updatePoi(poi.id, payload);
+      }
 
-      message.success('Đã thêm điểm tham quan');
-      onCreated();
+      message.success(
+        isEdit ? 'Đã cập nhật điểm tham quan' : 'Đã thêm điểm tham quan'
+      );
+      onSaved();
       handleClose();
     } catch (error) {
       const status = readHttpStatus(error);
@@ -101,6 +119,7 @@ export function AddPoiModal({
           setSubmitError(parsed.message);
         }
       } else if (status === 404) {
+        // Sửa một điểm vừa bị xóa ở nơi khác.
         setSubmitError(parsed.message);
       } else {
         setSubmitError('Không kết nối được máy chủ. Vui lòng thử lại.');
@@ -110,9 +129,27 @@ export function AddPoiModal({
     }
   };
 
+  // Sửa thì điền sẵn giá trị hiện tại của điểm; thêm mới thì dùng giá trị mặc định.
+  const initialValues: PoiFormValues =
+    poi === null
+      ? {
+          name: '',
+          radiusM: DEFAULT_RADIUS_M,
+          orderIndex: defaultOrderIndex,
+          latitude: null,
+          longitude: null,
+        }
+      : {
+          name: poi.name,
+          radiusM: poi.radiusM,
+          orderIndex: poi.orderIndex,
+          latitude: poi.latitude,
+          longitude: poi.longitude,
+        };
+
   return (
     <Modal
-      title="Thêm điểm tham quan"
+      title={isEdit ? 'Sửa điểm tham quan' : 'Thêm điểm tham quan'}
       open={open}
       width={640}
       okText="Lưu"
@@ -139,12 +176,13 @@ export function AddPoiModal({
       )}
 
       <Form<PoiFormValues>
+        key={poi === null ? 'create' : `edit-${poi.id}`}
         form={form}
         layout="vertical"
         onFinish={handleFinish}
         requiredMark={false}
         disabled={submitting}
-        initialValues={{ radiusM: DEFAULT_RADIUS_M, orderIndex: defaultOrderIndex }}
+        initialValues={initialValues}
       >
         <Form.Item
           name="name"

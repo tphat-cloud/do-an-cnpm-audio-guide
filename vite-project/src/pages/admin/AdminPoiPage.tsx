@@ -1,11 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Empty, Result, Spin, Statistic, Table, Typography } from 'antd';
+import {
+  App,
+  Button,
+  Card,
+  Empty,
+  Popconfirm,
+  Result,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Typography,
+} from 'antd';
 import type { TableColumnsType } from 'antd';
 import { EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
-import { fetchAdminLocation, fetchPresence } from '../../api/admin';
+import {
+  deletePoi,
+  fetchAdminLocation,
+  fetchPresence,
+  readApiError,
+} from '../../api/admin';
 import type { PresenceStats } from '../../api/admin';
+import { readHttpStatus } from '../../api/client';
 import type { PoiSummary } from '../../types';
-import { AddPoiModal } from './AddPoiModal';
+import { PoiFormModal } from './PoiFormModal';
 
 type LoadStatus = 'loading' | 'ready' | 'error';
 
@@ -13,10 +31,10 @@ type LoadStatus = 'loading' | 'ready' | 'error';
 const PRESENCE_POLL_MS = 10_000;
 
 /**
- * Bảng danh sách điểm (PRD 7.1.4 - UC08). Bản này chỉ xem danh sách và thêm
- * điểm; chưa làm sửa/xóa và chưa gắn bản đồ.
+ * Các cột dữ liệu của bảng danh sách điểm (PRD 7.1.4 - UC08). Cột "Thao tác"
+ * cần gọi API nên được ghép thêm trong component. Chưa gắn bản đồ chấm tọa độ.
  */
-const COLUMNS: TableColumnsType<PoiSummary> = [
+const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
   { title: 'Tên', dataIndex: 'name', key: 'name', ellipsis: true },
   {
     title: 'Vĩ độ',
@@ -49,12 +67,16 @@ const COLUMNS: TableColumnsType<PoiSummary> = [
 ];
 
 export function AdminPoiPage() {
+  const { message } = App.useApp();
   const [pois, setPois] = useState<PoiSummary[]>([]);
   const [status, setStatus] = useState<LoadStatus>('loading');
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [presence, setPresence] = useState<PresenceStats | null>(null);
   const [presenceStale, setPresenceStale] = useState(false);
+  // Điểm đang sửa (null: hộp thoại ở chế độ thêm mới) và điểm đang xóa.
+  const [formTarget, setFormTarget] = useState<PoiSummary | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -108,8 +130,79 @@ export function AdminPoiPage() {
 
   const reload = () => setReloadKey((key) => key + 1);
 
-  const openModal = () => setModalOpen(true);
+  const openCreate = () => {
+    setFormTarget(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (poi: PoiSummary) => {
+    setFormTarget(poi);
+    setModalOpen(true);
+  };
+
   const closeModal = () => setModalOpen(false);
+
+  // API06: chỉ gọi sau khi Admin xác nhận trong Popconfirm (PRD 3.3.8 - 5a).
+  const handleDelete = async (poi: PoiSummary) => {
+    setDeletingId(poi.id);
+
+    try {
+      const result = await deletePoi(poi.id);
+
+      message.success(
+        result.deletedTranslations > 0
+          ? `Đã xóa điểm tham quan và ${result.deletedTranslations} nội dung thuyết minh`
+          : 'Đã xóa điểm tham quan'
+      );
+      reload();
+    } catch (error) {
+      // 401 do interceptor chuyển trang, không cần báo thêm.
+      if (readHttpStatus(error) === 401) return;
+
+      const parsed = readApiError(error);
+
+      message.error(
+        parsed.status === null
+          ? 'Không kết nối được máy chủ. Vui lòng thử lại.'
+          : parsed.message
+      );
+
+      // 404: điểm đã bị xóa ở nơi khác -> tải lại danh sách cho khớp CSDL.
+      if (parsed.status === 404) reload();
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const columns: TableColumnsType<PoiSummary> = [
+    ...DATA_COLUMNS,
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 160,
+      render: (_value, poi) => (
+        <Space size={4}>
+          <Button size="small" onClick={() => openEdit(poi)}>
+            Sửa
+          </Button>
+          <Popconfirm
+            title="Xóa điểm tham quan?"
+            description="Sẽ xóa cả nội dung và audio của điểm này."
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => {
+              void handleDelete(poi);
+            }}
+          >
+            <Button size="small" danger loading={deletingId === poi.id}>
+              Xóa
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   // Gợi ý thứ tự kế tiếp; Admin vẫn sửa được trong hộp thoại.
   const defaultOrderIndex =
@@ -127,7 +220,7 @@ export function AdminPoiPage() {
           </Typography.Text>
         </div>
 
-        <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Thêm điểm
         </Button>
       </header>
@@ -184,7 +277,7 @@ export function AdminPoiPage() {
         <Table<PoiSummary>
           className="admin-table"
           rowKey="id"
-          columns={COLUMNS}
+          columns={columns}
           dataSource={pois}
           pagination={false}
           locale={{
@@ -193,7 +286,7 @@ export function AdminPoiPage() {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description="Chưa có điểm tham quan nào"
               >
-                <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
                   Thêm điểm
                 </Button>
               </Empty>
@@ -202,11 +295,12 @@ export function AdminPoiPage() {
         />
       )}
 
-      <AddPoiModal
+      <PoiFormModal
         open={modalOpen}
+        poi={formTarget}
         defaultOrderIndex={defaultOrderIndex}
         onClose={closeModal}
-        onCreated={reload}
+        onSaved={reload}
       />
     </div>
   );

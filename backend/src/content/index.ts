@@ -4,19 +4,27 @@ import { requireAdmin } from './auth.middleware';
 import { findLocationWithPois } from './location.repository';
 import {
   createPoi,
+  deletePoiWithTranslations,
   findPoiById,
   findPoiNarration,
+  findPoiTranslations,
   findTranslationContent,
   isDuplicateEntryError,
   isPoiNameTaken,
   isSupportedLang,
   locationExists,
   saveTranslation,
+  updatePoi,
   type SupportedLang,
 } from './poi.repository';
-import { validatePoiCreate } from './poi.validation';
+import { validatePoiCreate, validatePoiUpdate } from './poi.validation';
 import { countPresence, isValidSessionId, recordPresence } from './presence';
-import { commitAudioFile, discardAudioFile, receiveAudio } from './upload';
+import {
+  commitAudioFile,
+  discardAudioFile,
+  receiveAudio,
+  removeAudioFile,
+} from './upload';
 
 /**
  * Module content (PRD 2.2 - giai đoạn 1, sau tách thành content-service).
@@ -131,6 +139,104 @@ contentRouter.post('/pois', requireAdmin, async (req, res) => {
     }
 
     console.error('Lỗi API04 - thêm điểm tham quan:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
+// API05 - PUT /api/content/pois/:id (UC08)
+contentRouter.put('/pois/:id', requireAdmin, async (req, res) => {
+  const rawId = readParam(req.params.id);
+
+  if (!ID_PATTERN.test(rawId)) {
+    res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+    return;
+  }
+
+  const { input, errors } = validatePoiUpdate(req.body);
+
+  if (!input) {
+    res.status(400).json({ message: 'Dữ liệu không hợp lệ', errors });
+    return;
+  }
+
+  try {
+    const existing = await findPoiById(Number(rawId));
+
+    if (!existing) {
+      res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+      return;
+    }
+
+    // Chỉ so trùng trong địa danh hiện tại của điểm và bỏ qua chính nó,
+    // nhờ vậy giữ nguyên tên cũ thì không bị coi là trùng (PRD 3.3.8 - 6d).
+    if (await isPoiNameTaken(existing.locationId, input.name, existing.id)) {
+      res.status(409).json({ message: 'Tên điểm đã tồn tại' });
+      return;
+    }
+
+    const poi = await updatePoi(existing.id, input);
+    res.status(200).json(poi);
+  } catch (error) {
+    // Hai request đồng thời có thể cùng vượt bước kiểm tra trùng tên phía trên.
+    if (isDuplicateEntryError(error)) {
+      res.status(409).json({ message: 'Tên điểm đã tồn tại' });
+      return;
+    }
+
+    console.error('Lỗi API05 - sửa điểm tham quan:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
+// API06 - DELETE /api/content/pois/:id (UC08)
+contentRouter.delete('/pois/:id', requireAdmin, async (req, res) => {
+  const rawId = readParam(req.params.id);
+
+  if (!ID_PATTERN.test(rawId)) {
+    res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+    return;
+  }
+
+  try {
+    const deleted = await deletePoiWithTranslations(Number(rawId));
+
+    if (!deleted) {
+      res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+      return;
+    }
+
+    // Chỉ dọn file sau khi CSDL đã xóa xong (PRD 5.2.3); file thiếu thì bỏ qua.
+    await Promise.all(deleted.audioUrls.map((audioUrl) => removeAudioFile(audioUrl)));
+
+    res.status(200).json({
+      message: 'Đã xóa điểm tham quan',
+      deletedTranslations: deleted.deletedTranslations,
+    });
+  } catch (error) {
+    console.error('Lỗi API06 - xóa điểm tham quan:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
+// API07 - GET /api/content/pois/:id/translations (UC09)
+contentRouter.get('/pois/:id/translations', requireAdmin, async (req, res) => {
+  const rawId = readParam(req.params.id);
+
+  if (!ID_PATTERN.test(rawId)) {
+    res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+    return;
+  }
+
+  try {
+    if (!(await findPoiById(Number(rawId)))) {
+      res.status(404).json({ message: 'Không tìm thấy điểm tham quan' });
+      return;
+    }
+
+    // Luôn đủ 5 ngôn ngữ vi, en, zh, ko, ja; thiếu nội dung thì text/audioUrl = null.
+    res.status(200).json(await findPoiTranslations(Number(rawId)));
+  } catch (error) {
+    console.error('Lỗi API07 - lấy nội dung điểm:', error);
     res.status(500).json({ message: 'Lỗi máy chủ' });
   }
 });
