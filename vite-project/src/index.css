@@ -189,6 +189,49 @@ body {
   filter: drop-shadow(0 0 6px rgba(22, 119, 255, 0.85));
 }
 
+/* Marker du khách: chấm đỏ viền trắng, có nhịp lan nhẹ để dễ thấy (UC06).
+   Ghi đè nền/border mặc định của .leaflet-div-icon nên phải tăng độ ưu tiên. */
+.stg-user-marker.leaflet-div-icon {
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+}
+
+.stg-user-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #ff4d4f;
+  box-shadow: 0 0 0 rgba(255, 77, 79, 0.45), 0 1px 6px rgba(15, 23, 42, 0.35);
+  animation: stg-user-pulse 2s ease-out infinite;
+}
+
+@keyframes stg-user-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.45), 0 1px 6px rgba(15, 23, 42, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 77, 79, 0), 0 1px 6px rgba(15, 23, 42, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 79, 0), 0 1px 6px rgba(15, 23, 42, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stg-user-dot {
+    animation: none;
+  }
+}
+
+/* Chế độ Demo: đổi con trỏ để thấy rõ bản đồ đang nhận thao tác chạm. */
+.stg-map-canvas-picking.leaflet-container {
+  cursor: crosshair;
+}
+
 /* ==== Danh sách điểm ==== */
 .stg-list {
   display: flex;
@@ -434,4 +477,91 @@ body {
   min-height: 52px;
   font-size: 17px;
   font-weight: 600;
+}
+
+/* ==== Bảng điều khiển giả lập GPS (chế độ Demo, ngoài PRD) ==== */
+.stg-demo {
+  position: fixed;
+  /* Neo theo mép phải khung nội dung 480px để panel không đè lên nội dung trên desktop. */
+  right: max(16px, calc((100vw - 480px) / 2 + 16px));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  /* Trên thanh trên cùng (10) nhưng dưới modal/thông báo của antd. */
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(300px, calc(100vw - 32px));
+  max-height: 70vh;
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid #ffd591;
+  border-radius: 14px;
+  background: rgba(255, 251, 245, 0.98);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.stg-demo-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stg-demo-badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff2e8;
+  color: #d4380d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.stg-demo-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #5c6675;
+}
+
+.stg-demo-close.ant-btn {
+  flex: 0 0 auto;
+  color: #8c8c8c;
+}
+
+.stg-demo-coords {
+  font-size: 12px;
+  color: #8c8c8c;
+  font-variant-numeric: tabular-nums;
+}
+
+.stg-demo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+/* Danh sách điểm trong panel: chữ dài xuống dòng, vẫn đủ vùng chạm 44px. */
+.stg-demo-poi.ant-btn {
+  justify-content: flex-start;
+  height: auto;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 13px;
+  text-align: left;
+  white-space: normal;
+}
+
+.stg-demo-empty {
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+.stg-demo-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ad6800;
 }

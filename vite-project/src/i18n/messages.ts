@@ -42,6 +42,17 @@ export interface UiText {
   replay: string;
   listened: string;
   finished: string;
+  /** Bảng điều khiển giả lập GPS (chỉ dùng khi demo ngoài thực địa). */
+  demoTitle: string;
+  demoGoTo: string;
+  demoClickMapOn: string;
+  demoClickMapOff: string;
+  demoClickHint: string;
+  demoNoPosition: string;
+  demoNoPoi: string;
+  demoExit: string;
+  /** Toast khi geofence tự phát thuyết minh; {name} được thay bằng tên điểm (UC04). */
+  geofenceToast: string;
 }
 
 export const MESSAGES: Record<Lang, UiText> = {
@@ -74,6 +85,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     replay: 'Nghe lại',
     listened: 'Đã nghe',
     finished: 'Đã nghe xong',
+    demoTitle: 'Giả lập vị trí GPS',
+    demoGoTo: 'Đến',
+    demoClickMapOn: 'Bật click trên bản đồ',
+    demoClickMapOff: 'Tắt click trên bản đồ',
+    demoClickHint: 'Chạm vào bản đồ để di chuyển vị trí du khách',
+    demoNoPosition: 'Chưa chọn vị trí giả lập',
+    demoNoPoi: 'Địa danh chưa có điểm tham quan',
+    demoExit: 'Thoát chế độ Demo',
+    geofenceToast: 'Bạn đã đến {name}, đang phát thuyết minh...',
   },
   en: {
     loading: 'Loading...',
@@ -104,6 +124,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     replay: 'Replay',
     listened: 'Listened',
     finished: 'Finished',
+    demoTitle: 'Mock GPS location',
+    demoGoTo: 'Go to',
+    demoClickMapOn: 'Enable map click',
+    demoClickMapOff: 'Disable map click',
+    demoClickHint: 'Tap the map to move the visitor',
+    demoNoPosition: 'No mock position yet',
+    demoNoPoi: 'This site has no points of interest yet',
+    demoExit: 'Exit demo mode',
+    geofenceToast: 'You have arrived at {name}, playing narration...',
   },
   zh: {
     loading: '加载中...',
@@ -134,6 +163,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     replay: '重新播放',
     listened: '已收听',
     finished: '已播放完毕',
+    demoTitle: '模拟 GPS 定位',
+    demoGoTo: '前往',
+    demoClickMapOn: '开启地图点击选点',
+    demoClickMapOff: '关闭地图点击选点',
+    demoClickHint: '点击地图即可移动游客位置',
+    demoNoPosition: '尚未选择模拟位置',
+    demoNoPoi: '该景点暂无景点内容',
+    demoExit: '退出演示模式',
+    geofenceToast: '您已到达{name}，正在播放讲解...',
   },
   ko: {
     loading: '불러오는 중...',
@@ -164,6 +202,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     replay: '다시 듣기',
     listened: '들음',
     finished: '재생 완료',
+    demoTitle: 'GPS 위치 시뮬레이션',
+    demoGoTo: '이동',
+    demoClickMapOn: '지도 클릭 사용',
+    demoClickMapOff: '지도 클릭 해제',
+    demoClickHint: '지도를 눌러 방문자 위치를 이동하세요',
+    demoNoPosition: '아직 모의 위치가 없습니다',
+    demoNoPoi: '아직 등록된 관광지가 없습니다',
+    demoExit: '데모 모드 종료',
+    geofenceToast: '{name}에 도착했습니다. 해설을 재생합니다...',
   },
   ja: {
     loading: '読み込み中...',
@@ -194,6 +241,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     replay: 'もう一度聞く',
     listened: '視聴済み',
     finished: '再生終了',
+    demoTitle: 'GPS位置のシミュレーション',
+    demoGoTo: '移動',
+    demoClickMapOn: '地図クリックを有効化',
+    demoClickMapOff: '地図クリックを無効化',
+    demoClickHint: '地図をタップして訪問者の位置を移動します',
+    demoNoPosition: 'モック位置が未設定です',
+    demoNoPoi: '見どころがまだ登録されていません',
+    demoExit: 'デモモードを終了',
+    geofenceToast: '{name}に到着しました。解説を再生します...',
   },
 };
 

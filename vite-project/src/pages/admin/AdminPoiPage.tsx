@@ -32,7 +32,7 @@ const PRESENCE_POLL_MS = 10_000;
 
 /**
  * Các cột dữ liệu của bảng danh sách điểm (PRD 7.1.4 - UC08). Cột "Thao tác"
- * cần gọi API nên được ghép thêm trong component. Chưa gắn bản đồ chấm tọa độ.
+ * cần gọi API nên được ghép thêm trong component.
  */
 const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
   { title: 'Tên', dataIndex: 'name', key: 'name', ellipsis: true },
@@ -299,6 +299,7 @@ export function AdminPoiPage() {
         open={modalOpen}
         poi={formTarget}
         defaultOrderIndex={defaultOrderIndex}
+        existingPois={pois}
         onClose={closeModal}
         onSaved={reload}
       />

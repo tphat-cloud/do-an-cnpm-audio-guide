@@ -7,6 +7,7 @@ import type { Lang, LocationDetail } from '../types';
 const LANG_STORAGE_KEY = 'smarttour.lang';
 const LOCATION_STORAGE_KEY = 'smarttour.location_id';
 const LISTENED_STORAGE_PREFIX = 'smarttour.listened.';
+const TRIGGERED_STORAGE_PREFIX = 'smarttour.geofence.';
 
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -19,17 +20,31 @@ function readStoredLang(): Lang {
   return stored && isSupportedLang(stored) ? stored : detectDefaultLang();
 }
 
-/** Điểm đã nghe được lưu trong phiên (PRD 2.7.4 - sessionStorage). */
-function readListenedPoiIds(locationId: number | null): number[] {
+/** Danh sách id điểm lưu trong phiên (PRD 2.7.4 - sessionStorage). */
+function readStoredPoiIds(prefix: string, locationId: number | null): number[] {
   if (locationId === null) return [];
 
   try {
-    const raw = sessionStorage.getItem(LISTENED_STORAGE_PREFIX + locationId);
+    const raw = sessionStorage.getItem(prefix + locationId);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'number') : [];
   } catch {
     return [];
   }
+}
+
+/** Ghi thêm một id vào danh sách của phiên; id đã có thì trả null (không ghi lại). */
+function appendStoredPoiId(
+  prefix: string,
+  locationId: number,
+  ids: number[],
+  poiId: number
+): number[] | null {
+  if (ids.includes(poiId)) return null;
+
+  const next = [...ids, poiId];
+  sessionStorage.setItem(prefix + locationId, JSON.stringify(next));
+  return next;
 }
 
 interface TourState {
@@ -45,10 +60,13 @@ interface TourState {
   /** Ngôn ngữ vừa tải lỗi, dùng cho nút "Thử lại". */
   failedLang: Lang | null;
   listenedPoiIds: number[];
+  /** Điểm đã được geofence tự phát trong phiên (UC04 - BR04), tránh phát lặp. */
+  triggeredPoiIds: number[];
   setLang: (lang: Lang) => void;
   loadLocation: (locationId: number) => Promise<void>;
   retryLangReload: () => void;
   markListened: (poiId: number) => void;
+  markTriggered: (poiId: number) => void;
 }
 
 // Tăng mỗi lần tải địa danh; phản hồi của lần tải đã bị thay thế thì bỏ qua.
@@ -101,6 +119,7 @@ export const useTourStore = create<TourState>()((set, get) => ({
   refreshFailed: false,
   failedLang: null,
   listenedPoiIds: [],
+  triggeredPoiIds: [],
 
   setLang: (lang) => {
     const current = get();
@@ -141,6 +160,7 @@ export const useTourStore = create<TourState>()((set, get) => ({
         refreshFailed: false,
         failedLang: null,
         listenedPoiIds: [],
+        triggeredPoiIds: [],
       });
       return;
     }
@@ -155,7 +175,8 @@ export const useTourStore = create<TourState>()((set, get) => ({
       refreshing: false,
       refreshFailed: false,
       failedLang: null,
-      listenedPoiIds: readListenedPoiIds(locationId),
+      listenedPoiIds: readStoredPoiIds(LISTENED_STORAGE_PREFIX, locationId),
+      triggeredPoiIds: readStoredPoiIds(TRIGGERED_STORAGE_PREFIX, locationId),
     });
 
     try {
@@ -177,11 +198,18 @@ export const useTourStore = create<TourState>()((set, get) => ({
 
   markListened: (poiId) => {
     const { locationId, listenedPoiIds } = get();
-    if (locationId === null || listenedPoiIds.includes(poiId)) return;
+    if (locationId === null) return;
 
-    const next = [...listenedPoiIds, poiId];
-    sessionStorage.setItem(LISTENED_STORAGE_PREFIX + locationId, JSON.stringify(next));
-    set({ listenedPoiIds: next });
+    const next = appendStoredPoiId(LISTENED_STORAGE_PREFIX, locationId, listenedPoiIds, poiId);
+    if (next) set({ listenedPoiIds: next });
+  },
+
+  markTriggered: (poiId) => {
+    const { locationId, triggeredPoiIds } = get();
+    if (locationId === null) return;
+
+    const next = appendStoredPoiId(TRIGGERED_STORAGE_PREFIX, locationId, triggeredPoiIds, poiId);
+    if (next) set({ triggeredPoiIds: next });
   },
 }));
 

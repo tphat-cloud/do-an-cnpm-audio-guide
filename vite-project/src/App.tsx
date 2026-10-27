@@ -2,6 +2,7 @@ import { App as AntApp, ConfigProvider } from 'antd';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './admin.css';
 import { AdminGuard } from './components/AdminGuard';
+import { DemoModeShortcut } from './components/DemoModeShortcut';
 import { VisitorPresence } from './components/VisitorPresence';
 import { AdminContentPage } from './pages/admin/AdminContentPage';
 import { AdminLayout } from './pages/admin/AdminLayout';
@@ -34,6 +35,8 @@ function App() {
         <BrowserRouter>
           {/* Đếm người đang truy cập cho phần khách (API10), không ảnh hưởng giao diện. */}
           <VisitorPresence />
+          {/* Bật/tắt chế độ giả lập GPS bằng Ctrl + Shift + D hoặc ?demo=true. */}
+          <DemoModeShortcut />
           <Routes>
             <Route path="/" element={<WelcomePage />} />
             <Route path="/tour" element={<TourPage />} />

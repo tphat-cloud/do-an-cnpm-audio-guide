@@ -141,7 +141,7 @@ export function AudioPlayer({ src, autoPlay, text, onStarted }: Props) {
             percent={percent}
             showInfo={false}
             strokeColor="#1677ff"
-            trailColor="#f0f0f0"
+            railColor="#f0f0f0"
             size="small"
           />
           <div className="stg-player-time">

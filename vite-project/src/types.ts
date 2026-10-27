@@ -1,6 +1,12 @@
 /** 5 ngôn ngữ hỗ trợ (PRD 2.7.3). */
 export type Lang = 'vi' | 'en' | 'zh' | 'ko' | 'ja';
 
+/** Tọa độ địa lý, dùng cho vị trí du khách (GPS thật hoặc giả lập). */
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
 /** Một điểm tham quan trong danh sách của địa danh (API02). */
 export interface PoiSummary {
   id: number;
