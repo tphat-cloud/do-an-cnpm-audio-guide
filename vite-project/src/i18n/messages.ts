@@ -51,8 +51,13 @@ export interface UiText {
   demoNoPosition: string;
   demoNoPoi: string;
   demoExit: string;
+  /** Thu gọn / phóng to bảng giả lập GPS (nút ở header). */
+  demoCollapse: string;
+  demoExpand: string;
   /** Toast khi geofence tự phát thuyết minh; {name} được thay bằng tên điểm (UC04). */
   geofenceToast: string;
+  /** Khoảng cách còn lại trong popup marker; {distance} là số đã định dạng (UC06/UC10). */
+  distanceFromYou: string;
 }
 
 export const MESSAGES: Record<Lang, UiText> = {
@@ -93,7 +98,10 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoNoPosition: 'Chưa chọn vị trí giả lập',
     demoNoPoi: 'Địa danh chưa có điểm tham quan',
     demoExit: 'Thoát chế độ Demo',
+    demoCollapse: 'Thu gọn',
+    demoExpand: 'Mở rộng',
     geofenceToast: 'Bạn đã đến {name}, đang phát thuyết minh...',
+    distanceFromYou: 'Cách bạn {distance}',
   },
   en: {
     loading: 'Loading...',
@@ -132,7 +140,10 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoNoPosition: 'No mock position yet',
     demoNoPoi: 'This site has no points of interest yet',
     demoExit: 'Exit demo mode',
+    demoCollapse: 'Collapse',
+    demoExpand: 'Expand',
     geofenceToast: 'You have arrived at {name}, playing narration...',
+    distanceFromYou: '{distance} away',
   },
   zh: {
     loading: '加载中...',
@@ -171,7 +182,10 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoNoPosition: '尚未选择模拟位置',
     demoNoPoi: '该景点暂无景点内容',
     demoExit: '退出演示模式',
+    demoCollapse: '收起',
+    demoExpand: '展开',
     geofenceToast: '您已到达{name}，正在播放讲解...',
+    distanceFromYou: '距您 {distance}',
   },
   ko: {
     loading: '불러오는 중...',
@@ -210,7 +224,10 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoNoPosition: '아직 모의 위치가 없습니다',
     demoNoPoi: '아직 등록된 관광지가 없습니다',
     demoExit: '데모 모드 종료',
+    demoCollapse: '축소',
+    demoExpand: '확대',
     geofenceToast: '{name}에 도착했습니다. 해설을 재생합니다...',
+    distanceFromYou: '{distance} 거리',
   },
   ja: {
     loading: '読み込み中...',
@@ -249,7 +266,10 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoNoPosition: 'モック位置が未設定です',
     demoNoPoi: '見どころがまだ登録されていません',
     demoExit: 'デモモードを終了',
+    demoCollapse: '折りたたむ',
+    demoExpand: '展開',
     geofenceToast: '{name}に到着しました。解説を再生します...',
+    distanceFromYou: '距離 {distance}',
   },
 };
 

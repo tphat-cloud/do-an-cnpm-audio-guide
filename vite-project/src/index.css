@@ -175,6 +175,11 @@ body {
   font-weight: 600;
 }
 
+.stg-map-popup-distance {
+  color: #5c6675;
+  font-size: 13px;
+}
+
 .stg-map-popup .ant-btn {
   width: 100%;
 }
@@ -328,6 +333,15 @@ body {
   flex: 1;
   font-size: 16px;
   line-height: 1.4;
+}
+
+/* Khoảng cách còn lại tới điểm (PRD 7.1); căn phải, chữ muted. */
+.stg-poi-distance {
+  flex: 0 0 auto;
+  color: #8c94a1;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .stg-poi-arrow {
@@ -498,6 +512,18 @@ body {
   border-radius: 14px;
   background: rgba(255, 251, 245, 0.98);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+/* Thu gọn: chỉ còn thanh tiêu đề, co lại vừa nội dung để chiếm ít chỗ nhất. */
+.stg-demo.is-collapsed {
+  width: auto;
+  max-height: none;
+  padding: 6px 8px;
+  overflow: visible;
+}
+
+.stg-demo.is-collapsed .stg-demo-head {
+  cursor: pointer;
 }
 
 .stg-demo-head {

@@ -17,7 +17,7 @@ import { MESSAGES } from '../i18n/messages';
 import { useGpsStore } from '../store/useGpsStore';
 import type { GpsFix } from '../store/useGpsStore';
 import { readStoredLocationId, useTourStore } from '../store/useTourStore';
-import { findTriggeredPoi, MAX_ACCURACY_M } from '../utils/geo';
+import { findTriggeredPoi, formatDistance, haversineMeters, MAX_ACCURACY_M } from '../utils/geo';
 import type { Lang, PoiNarration, PoiSummary } from '../types';
 
 type NarrationStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -262,6 +262,7 @@ export function TourPage() {
               listenedPoiIds={listenedPoiIds}
               selectedPoiId={selectedPoiId}
               listenLabel={text.mapListen}
+              distanceLabel={text.distanceFromYou}
               onListen={handleSelectPoi}
               userLocation={fix}
               pickingEnabled={demoEnabled && clickToMove}
@@ -355,6 +356,9 @@ export function TourPage() {
                       <span className="stg-poi-index">{index + 1}</span>
                       <EnvironmentOutlined className="stg-poi-icon" aria-hidden />
                       <span className="stg-poi-name">{poi.name}</span>
+                      <span className="stg-poi-distance">
+                        {fix ? formatDistance(haversineMeters(fix, poi)) : '—'}
+                      </span>
                       {isListened && <Tag className="stg-tag-listened">{text.listened}</Tag>}
                       <RightOutlined className="stg-poi-arrow" aria-hidden />
                     </button>

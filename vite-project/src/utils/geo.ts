@@ -34,6 +34,14 @@ export interface PoiDistance {
 }
 
 /**
+ * Định dạng khoảng cách cho giao diện (PRD 7.1 - "khoảng cách còn lại"):
+ * dưới 1km làm tròn tới mét, từ 1km dùng km với một chữ số thập phân.
+ */
+export function formatDistance(meters: number): string {
+  return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
+}
+
+/**
  * Điểm gần nhất đang nằm trong bán kính kích hoạt của chính nó (UC04 - bước 3, 4).
  * Không có điểm nào trong vùng thì trả null để chờ tọa độ mới.
  */

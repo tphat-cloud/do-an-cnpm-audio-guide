@@ -16,6 +16,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
+import { formatDistance, haversineMeters } from '../utils/geo';
 import type { GpsFix } from '../store/useGpsStore';
 import type { LatLng, PoiSummary } from '../types';
 
@@ -171,6 +172,8 @@ interface TourMapProps {
   listenedPoiIds: number[];
   selectedPoiId: number | null;
   listenLabel: string;
+  /** Nhãn khoảng cách còn lại trong popup; {distance} được thay bằng số đã định dạng. */
+  distanceLabel: string;
   onListen: (poiId: number) => void;
   /** Vị trí du khách (GPS thật hoặc giả lập); chưa định vị được thì chỉ hiện điểm. */
   userLocation: GpsFix | null;
@@ -188,6 +191,7 @@ export function TourMap({
   listenedPoiIds,
   selectedPoiId,
   listenLabel,
+  distanceLabel,
   onListen,
   userLocation,
   pickingEnabled,
@@ -249,6 +253,14 @@ export function TourMap({
               <Popup>
                 <div className="stg-map-popup">
                   <span className="stg-map-popup-name">{poi.name}</span>
+                  {userLocation && (
+                    <span className="stg-map-popup-distance">
+                      {distanceLabel.replace(
+                        '{distance}',
+                        formatDistance(haversineMeters(userLocation, poi))
+                      )}
+                    </span>
+                  )}
                   <Button
                     type="primary"
                     className="stg-touch"
