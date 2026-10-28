@@ -13,7 +13,7 @@ import {
   Typography,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
 import {
   deletePoi,
   fetchAdminLocation,
@@ -240,6 +240,14 @@ export function AdminPoiPage() {
             value={presence?.totalSessions ?? 0}
             prefix={<EyeOutlined />}
             loading={presence === null && !presenceStale}
+          />
+        </Card>
+        <Card variant="outlined" className="admin-stat-card">
+          <Statistic
+            title="Số điểm tham quan"
+            value={pois.length}
+            prefix={<EnvironmentOutlined />}
+            loading={status === 'loading'}
           />
         </Card>
       </section>

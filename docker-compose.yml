@@ -21,6 +21,21 @@ services:
       - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
 
+  # === phpMyAdmin: gia dien web de XEM CSDL luc phat trienh ===
+  # Mo tai http://localhost:8080, dang nhap root / root123.
+  # Chi la cong cu xem luc dev, khong thuoc kien truc he thong, khong ảnh hưởng backend/frontend.
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: doan-phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"             # Truy cập giao diện qua localhost:8080
+    environment:
+      PMA_HOST: mysql         # Ten service MySQL o tren (cung mang Docker)
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+
 # Volumes giữ data khi container bị xóa
 volumes:
   mysql_data:

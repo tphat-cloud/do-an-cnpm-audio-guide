@@ -31,7 +31,7 @@ import {
  *
  * Phạm vi: địa danh, điểm tham quan, nội dung thuyết minh và file audio
  * (UC01, UC03, UC05, UC06, UC08, UC09, UC10); sở hữu các bảng
- * `locations`, `pois`, `poi_translations`.
+ * `locations`, `pois`, `poi_translations`, `visitor_sessions`.
  * Quy ước: KHÔNG import code từ `src/auth`; tự kiểm tra JWT bằng secret
  * dùng chung thay vì gọi sang auth.
  */
@@ -39,6 +39,9 @@ export const contentRouter = Router();
 
 // Thư mục audio do module content quản lý, src/index.ts dùng để phục vụ tĩnh.
 export { AUDIO_DIR, AUDIO_URL_PREFIX } from './upload';
+
+// Dọn phiên truy cập cũ; src/index.ts gọi lúc khởi động và mỗi ngày một lần.
+export { pruneOldSessions } from './presence';
 
 const ID_PATTERN = /^\d+$/;
 const DEFAULT_LANG = 'vi';
@@ -385,7 +388,7 @@ contentRouter.put(
 );
 
 // API10 - POST /api/content/presence (công khai, không cần đăng nhập)
-contentRouter.post('/presence', (req, res) => {
+contentRouter.post('/presence', async (req, res) => {
   const body = (req.body ?? {}) as { sessionId?: unknown };
 
   if (!isValidSessionId(body.sessionId)) {
@@ -393,12 +396,22 @@ contentRouter.post('/presence', (req, res) => {
     return;
   }
 
-  // Không trả nội dung: Web Client chỉ cần biết là đã ghi nhận.
-  recordPresence(body.sessionId);
-  res.status(204).end();
+  try {
+    // Không trả nội dung: Web Client chỉ cần biết là đã ghi nhận.
+    await recordPresence(body.sessionId);
+    res.status(204).end();
+  } catch (error) {
+    console.error('Lỗi API10 - ghi nhận truy cập:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
 });
 
 // API11 - GET /api/content/presence/count (chỉ Admin, PRD 2.7.1)
-contentRouter.get('/presence/count', requireAdmin, (_req, res) => {
-  res.status(200).json(countPresence());
+contentRouter.get('/presence/count', requireAdmin, async (_req, res) => {
+  try {
+    res.status(200).json(await countPresence());
+  } catch (error) {
+    console.error('Lỗi API11 - đếm truy cập:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
 });
