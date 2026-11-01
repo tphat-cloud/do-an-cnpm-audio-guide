@@ -67,6 +67,13 @@
 ## Ghi chú môi trường (quan trọng)
 
 - **Không đặt repo trong `OneDrive`** — OneDrive khóa file trong `.git` gây treo/xung đột khi
-  commit, xóa nhánh. Khuyến nghị chuyển về `C:\Dev\do-an-cnpm-audio-guide`.
+  commit, xóa nhánh. **Đã chuyển repo về `C:\Dev\do-an-cnpm-audio-guide`**; khi clone hãy chọn
+  đường dẫn tương tự (ngoài OneDrive/Desktop được đồng bộ).
+- Tên project Docker đã ghim `doancnpm` trong `docker-compose.yml` → clone vào thư mục tên
+  khác vẫn dùng chung một bộ container/volume, không lỗi trùng tên.
+- Xem CSDL bằng **DBeaver** (hoặc client bất kỳ): `localhost:3306`, user `doan_user`,
+  password `doan_pass123`, DB `narration_db`. Không còn phpMyAdmin trong compose.
 - Yêu cầu chạy: **Docker Desktop** + **Node.js 20+**. Mỗi người tự tạo `backend/.env`
   từ `backend/.env.example` (file `.env` đã được `.gitignore`, đừng commit).
+- **Audio demo không có trong git** (`uploads/` bị ignore) → ai cần demo đủ tiếng thì
+  xin file trong `backend/uploads/audio/` từ Phát, hoặc tự tải lên qua trang admin.
