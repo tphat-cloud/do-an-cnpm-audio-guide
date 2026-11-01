@@ -2,6 +2,13 @@
 # Lệnh chạy: docker compose up -d
 # Lệnh tắt:  docker compose down
 
+# Pin tên project để không phụ thuộc tên thư mục chứa file này
+# (mỗi người clone vào folder tên khác nhau vẫn dùng chung một bộ tài nguyên,
+#  và tránh lỗi "container name is already in use" khi đổi chỗ đặt repo).
+# Giữ đúng tên "doancnpm" mà volume dữ liệu đang mang (volume của compose
+#  có tiền tố = tên project → đổi tên project sẽ sinh volume RỖNG khác).
+name: doancnpm
+
 services:
   # === MySQL Database ===
   mysql:
@@ -21,20 +28,8 @@ services:
       - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
 
-  # === phpMyAdmin: gia dien web de XEM CSDL luc phat trienh ===
-  # Mo tai http://localhost:8080, dang nhap root / root123.
-  # Chi la cong cu xem luc dev, khong thuoc kien truc he thong, khong ảnh hưởng backend/frontend.
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: doan-phpmyadmin
-    restart: always
-    ports:
-      - "8080:80"             # Truy cập giao diện qua localhost:8080
-    environment:
-      PMA_HOST: mysql         # Ten service MySQL o tren (cung mang Docker)
-      PMA_PORT: 3306
-    depends_on:
-      - mysql
+# Không đưa phpMyAdmin vào compose: mỗi người dùng client CSDL riêng (DBeaver...)
+# kết nối localhost:3306, đỡ chiếm port và nhẹ máy khi chạy demo.
 
 # Volumes giữ data khi container bị xóa
 volumes:

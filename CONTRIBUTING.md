@@ -76,13 +76,17 @@ Yêu cầu: **Docker Desktop** và **Node.js 20+**.
 
 ```bash
 git clone https://github.com/tphat-cloud/do-an-cnpm-audio-guide.git
-docker compose up -d                       # chạy MySQL 8.0 + phpMyAdmin
+docker compose up -d                       # chạy MySQL 8.0 (container: doan-mysql)
 # tạo backend/.env từ backend/.env.example, điền JWT_SECRET
 npm install                                # chạy trong backend/ và vite-project/
 ```
 
 > Lưu ý: `backend/.env`, `node_modules/`, `dist/` đã được `.gitignore` —
 > **không commit** các file này (đặc biệt là bí mật).
+
+Xem dữ liệu bằng client CSDL cá nhân (DBeaver, TablePlus, ...), không dùng phpMyAdmin
+để đỡ chiếm port: host `localhost`, port `3306`, user `doan_user`,
+password `doan_pass123`, database `narration_db`.
 
 ## 6. Bảo vệ nhánh `main`
 

@@ -13,6 +13,9 @@ dist/
 # File audio admin tải lên (PRD 6.1 - phục vụ tại /uploads/audio)
 uploads/
 
+# Backup CSDL xuất từ mysqldump (chứa dữ liệu thật, không commit)
+backend/database/backup-*.sql
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
