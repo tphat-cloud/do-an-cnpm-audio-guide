@@ -16,11 +16,11 @@
 
 ## Phân vùng phụ trách (mỗi người owning một vùng riêng)
 
-| Người | Vùng thư mục (chỉ nên đụng vào đây) | Vai trò |
-| :-- | :-- | :-- |
-| **Người 1** | `backend/src/**`, `backend/database/**`, `docker-compose.yml`, `.github/**` | Backend & DevOps |
-| **Người 2** | `vite-project/src/pages/{WelcomePage,TourPage}.tsx`, `components/{AudioPlayer,TourMap,DemoGpsPanel,LanguageSelector}.tsx`, `hooks/**`, `store/{useTourStore,useGpsStore}.ts`, `utils/geo.ts`, `i18n/**` | Frontend Du khách |
-| **Người 3** | `vite-project/src/pages/admin/**`, `api/admin*.ts`, `store/useAdminStore.ts`, `docs/**` | Frontend Admin & Tài liệu |
+| Người | Thành viên | Vùng thư mục (chỉ nên đụng vào đây) | Vai trò |
+| :-- | :-- | :-- | :-- |
+| **Người 1** | **Phát** | `backend/src/**`, `backend/database/**`, `docker-compose.yml`, `.github/**` | Backend & DevOps |
+| **Người 2** | **Nam Anh** | `vite-project/src/pages/{WelcomePage,TourPage}.tsx`, `components/{AudioPlayer,TourMap,DemoGpsPanel,LanguageSelector}.tsx`, `hooks/**`, `store/{useTourStore,useGpsStore}.ts`, `utils/geo.ts`, `i18n/**` | Frontend Du khách |
+| **Người 3** | **Nhân** | `vite-project/src/pages/admin/**`, `api/admin*.ts`, `store/useAdminStore.ts`, `docs/**` | Frontend Admin & Tài liệu |
 
 > Vùng `vite-project/src/types.ts`, `App.tsx`, `api/client.ts` là **dùng chung** → ai sửa
 > phải báo trước trong nhóm + PR nhỏ, vì cả 3 đều đọc các file này.
@@ -31,12 +31,12 @@
 
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | TODO | - |
-| F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | TODO | - |
-| F2 | Hàng chờ bài thuyết minh: điểm mới không cắt ngang audio đang phát | FE Du khách | BR05, UC04-5b | Cao | TODO | - |
-| F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | TODO | - |
-| D1 | Hoàn thiện PRD Chương 1 (Mục đích, Bài toán, Mục tiêu, Phạm vi) | docs | Ch.1 | Cao | TODO | - |
-| D2 | Hoàn thiện PRD Chương 4 (Hiệu năng, Bảo mật, Tương thích, Khả năng dùng) | docs | Ch.4 | Cao | TODO | - |
+| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | TODO | Phát |
+| F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | TODO | Nam Anh |
+| F2 | Hàng chờ bài thuyết minh: điểm mới không cắt ngang audio đang phát | FE Du khách | BR05, UC04-5b | Cao | TODO | Nam Anh |
+| F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | TODO | Nam Anh |
+| D1 | Hoàn thiện PRD Chương 1 (Mục đích, Bài toán, Mục tiêu, Phạm vi) | docs | Ch.1 | Cao | TODO | Nhân |
+| D2 | Hoàn thiện PRD Chương 4 (Hiệu năng, Bảo mật, Tương thích, Khả năng dùng) | docs | Ch.4 | Cao | TODO | Nhân |
 
 ## 🟡 Ưu tiên TRUNG BÌNH — khớp PRD đã ghi
 
