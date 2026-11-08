@@ -31,7 +31,7 @@
 
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | TODO | Phát |
+| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | 🔒 doing | Phát |
 | F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | TODO | Nam Anh |
 | F2 | Hàng chờ bài thuyết minh: điểm mới không cắt ngang audio đang phát | FE Du khách | BR05, UC04-5b | Cao | TODO | Nam Anh |
 | F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | TODO | Nam Anh |
