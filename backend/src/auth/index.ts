@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
-import { findAdminByUsername } from './admin.repository';
+import { authenticateAdmin } from './admin.repository';
 
 /**
  * Module auth (PRD 2.2 - giai đoạn 1, sau tách thành auth-service).
@@ -38,18 +38,24 @@ authRouter.post('/login', async (req, res) => {
   }
 
   try {
-    const admin = await findAdminByUsername(username.trim());
-    // So khớp mật khẩu với cột password_hash (bcrypt), không so sánh chuỗi gốc.
-    const isPasswordMatched = admin
-      ? await bcrypt.compare(password, admin.passwordHash)
-      : false;
+    const result = await authenticateAdmin(username.trim(), (passwordHash) =>
+      bcrypt.compare(password, passwordHash)
+    );
 
-    // Chưa cài quy tắc khóa tài khoản sau 5 lần sai (429) - làm ở bước sau.
-    if (!admin || !isPasswordMatched) {
+    if (result.status === 'locked') {
+      res.status(429).json({
+        message: 'Đăng nhập sai quá nhiều lần, vui lòng thử lại sau',
+        retryAfterSeconds: result.retryAfterSeconds,
+      });
+      return;
+    }
+
+    if (result.status === 'invalid') {
       res.status(401).json({ message: 'Sai tên đăng nhập hoặc mật khẩu' });
       return;
     }
 
+    const { admin } = result;
     const token = jwt.sign(
       { sub: String(admin.id), username: admin.username, role: 'admin' },
       env.jwtSecret,
