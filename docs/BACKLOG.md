@@ -31,7 +31,7 @@
 
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | 🔒 doing | Phát |
+| B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | ✅ done (PR#5) | Phát |
 | F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | TODO | Nam Anh |
 | F2 | Hàng chờ bài thuyết minh: điểm mới không cắt ngang audio đang phát | FE Du khách | BR05, UC04-5b | Cao | TODO | Nam Anh |
 | F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | TODO | Nam Anh |
@@ -43,7 +43,7 @@
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | B2 | Dockerfile cho backend + frontend; compose mount volume `/uploads/audio` | backend / DevOps | 4.5.3 | TB | TODO | - |
-| B3 | Viết test tự động cho API (POI CRUD + auth + fallback ngôn ngữ) | backend | 4.5.1 | TB | TODO | - |
+| B3 | Viết test tự động cho API (POI CRUD + auth + fallback ngôn ngữ) | backend | 4.5.1 | TB | 🔒 doing | Phát |
 | F4 | Thông báo "Bạn đang ở ngoài khu tham quan" (>1 km) | FE Du khách | UC06-5a | TB | TODO | - |
 | F5 | Phát audio im lặng mở khóa tự phát ngay khi bấm "Bắt đầu" | FE Du khách | UC02-b2, BR07 | TB | TODO | - |
 | A1 | Rà + hoàn thiện Admin thêm/sửa/xóa, đồng bộ danh sách sau lưu | FE Admin | UC08 | TB | TODO | - |
