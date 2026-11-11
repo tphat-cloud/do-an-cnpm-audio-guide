@@ -47,9 +47,9 @@
 | F4 | Thông báo "Bạn đang ở ngoài khu tham quan" (>1 km) | FE Du khách | UC06-5a | TB | TODO | - |
 | F5 | Phát audio im lặng mở khóa tự phát ngay khi bấm "Bắt đầu" | FE Du khách | UC02-b2, BR07 | TB | TODO | - |
 | A1 | Rà + hoàn thiện Admin thêm/sửa/xóa, đồng bộ danh sách sau lưu | FE Admin | UC08 | TB | TODO | - |
-| D3 | Bổ sung UC11 (Xem số người truy cập): User Story + đặc tả + wireframe | docs | 3.1, 3.2 | TB | TODO | - |
-| D4 | Viết API10/API11 request/response vào PRD mục 6.2 | docs | 6.2 | TB | TODO | - |
-| D5 | Sửa PRD khớp code: "4 bảng"→5 bảng, thêm `visitor_sessions`, thêm cột `name` ở `poi_translations`, `oi_id`→`poi_id` | docs | 5.2, 3.3.9 | TB | TODO | - |
+| D3 | Bổ sung UC11 (Xem số người truy cập): User Story + đặc tả + wireframe | docs | 3.1, 3.2 | TB | 🔒 doing | Phát |
+| D4 | Viết API10/API11 request/response vào PRD mục 6.2 | docs | 6.2 | TB | 🔒 doing | Phát |
+| D5 | Sửa PRD khớp code: "4 bảng"→5 bảng, thêm `visitor_sessions`, thêm cột `name` ở `poi_translations`, `oi_id`→`poi_id` | docs | 5.2, 3.3.9 | TB | 🔒 doing | Phát |
 
 ## 🟢 Ưu tiên THẤP — ghi điểm bảo vệ
 
