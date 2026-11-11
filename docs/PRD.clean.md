@@ -1,4 +1,5 @@
-﻿# **TÀI LIỆU ĐẶC TẢ YÊU CẦU SẢN PHẨM (PRD)**
+﻿
+# **TÀI LIỆU ĐẶC TẢ YÊU CẦU SẢN PHẨM (PRD)**
 
 # **HỆ THỐNG THUYẾT MINH TỰ ĐỘNG ĐA NGÔN NGỮ**
 
@@ -21,7 +22,7 @@
 Backend được tách thành 3 service chạy độc lập, giao tiếp với nhau qua HTTP (REST/JSON):  
 \- api-gateway: điểm vào duy nhất cho Web Client và Admin Dashboard; chuyển yêu cầu đến service tương ứng.  
 \- auth-service: xử lý đăng nhập (UC07), tạo và xác thực JWT; quản lý bảng admins.  
-\- content-service: quản lý địa danh, điểm tham quan, nội dung thuyết minh và file audio (UC01, UC03, UC05, UC06, UC08, UC09, UC10); quản lý các bảng locations, pois, poi\_translations.
+\- content-service: quản lý địa danh, điểm tham quan, nội dung thuyết minh, file audio và đếm lượt truy cập (UC01, UC03, UC05, UC06, UC08, UC09, UC10, UC11); quản lý các bảng locations, pois, poi\_translations, visitor\_sessions.
 
 Luồng giao tiếp:  
 \- Web → api-gateway → auth-service (đăng nhập).  
@@ -148,6 +149,7 @@ Bước 4: Kiểm tra bằng cách mở web Client và nghe thử
 | UC08 | Quản lý điểm tham quan (thêm/sửa/xóa, tọa độ GPS)  | Admin | Quản lý điểm tham quan, tọa độ và bán kính kích hoạt  | 3.3.8  |
 | UC09 | Quản lý nội dung thuyết minh (văn bản, audio)  | Admin | Nhập văn bản và tải file mp3 theo từng ngôn ngữ  | 3.3.9  |
 | UC10 | Chọn điểm để nghe thủ công  | Du khách | Chọn điểm từ danh sách hoặc bản đồ để nghe, dùng khi GPS không kích hoạt được  | 3.3.10  |
+| UC11 | Đếm lượt truy cập  | Du khách, Admin  | Web Client tự gửi tín hiệu sống ẩn danh; Admin xem số phiên đang hoạt động và tổng số phiên  | 3.3.11  |
 
 ## 
 
@@ -174,6 +176,7 @@ Bước 4: Kiểm tra bằng cách mở web Client và nghe thử
 | US08 | Là admin, tôi muốn đăng nhập an toàn để chỉ người được phép mới quản lý được nội dung  | UC07 | Cao |
 | US09 | Là admin, tôi muốn thêm, sửa, xóa điểm tham quan và chấm tọa độ trên bản đồ để cấu hình các điểm trong địa danh  | UC08 | Cao |
 | US10 | Là admin, tôi muốn nhập bài thuyết minh và tải file mp3 cho từng điểm theo từng ngôn ngữ để du khách nghe được bằng ngôn ngữ của họ  | UC09 | Cao |
+| US11 | Là admin, tôi muốn biết có bao nhiêu du khách đang xem và đã từng xem để đánh giá mức độ sử dụng hệ thống  | UC11 | Thấp |
 
 ## **3.3 Đặc tả Use Case và Activity Diagram** 
 
@@ -354,7 +357,7 @@ Bước 4: Kiểm tra bằng cách mở web Client và nghe thử
 | Tiền điều kiện | Admin đã đăng nhập (UC07); điểm tham quan đã được tạo (UC08)  |
 | Hậu điều kiện | Nội dung (văn bản, đường dẫn audio) của điểm theo ngôn ngữ đã chọn được lưu; Web Client nghe và đọc được nội dung này (UC05)  |
 | Luồng chính | 1\. Admin chọn một điểm tham quan trong danh sách. 2\. Web hiển thị 5 tab ngôn ngữ, mỗi tab có ô văn bản thuyết minh và ô tải file mp3. 3\. Admin chọn một tab ngôn ngữ. 4\. Admin nhập bài thuyết minh và chọn file mp3 từ máy. 5\. Web kiểm tra loại file và dung lượng. 6\. Admin bấm “Lưu”; web gửi văn bản và file lên backend (kèm token). 7\. Backend lưu file vào thư mục lưu trữ, ghi văn bản và đường dẫn audio vào CSDL. 8\. Web báo thành công và cho nghe thử audio vừa tải lên.  |
-| Input | `oi_id`, `lang` (`vi`, `en`, `zh`, `ko`, `ja`), `text`, file `audio` (.mp3)  |
+| Input | `poi_id`, `lang` (`vi`, `en`, `zh`, `ko`, `ja`), `text`, file `audio` (.mp3)  |
 | Output | Bản ghi nội dung của điểm theo ngôn ngữ (văn bản, đường dẫn audio); thông báo thành công hoặc lỗi  |
 | Luồng ngoại lệ | 5a. File không phải mp3: báo “Chỉ chấp nhận file .mp3”, không gửi lên. 5b. File quá dung lượng (trên 10 MB): báo “File quá lớn, tối đa 10 MB”. 6a. Văn bản để trống: báo “Vui lòng nhập nội dung thuyết minh”; cho phép lưu văn bản mà chưa có audio. 6b. Ngôn ngữ này của điểm đã có nội dung: hỏi xác nhận “Ghi đè nội dung hiện có?” trước khi lưu. 7a. Tải file lỗi giữa chừng hoặc mất mạng: không lưu gì, giữ nguyên nội dung cũ, báo lỗi và cho thử lại. 7b. Token hết hạn (401): đưa về trang đăng nhập (UC07). 1a. Điểm chưa có nội dung tiếng Việt: hiện nhắc nhở, vì tiếng Việt là ngôn ngữ dự phòng khi thiếu bản dịch (UC03, UC05).  |
 
@@ -379,6 +382,26 @@ Bước 4: Kiểm tra bằng cách mở web Client và nghe thử
 | Luồng ngoại lệ | 5a. Đang phát thuyết minh của điểm khác: dừng bài hiện tại và phát điểm vừa chọn ngay, vì đây là thao tác chủ động của du khách. 5b. Điểm chưa có nội dung hoặc audio ở ngôn ngữ đã chọn: xử lý như UC05 (hiện văn bản hoặc nội dung tiếng Việt kèm thông báo). 3a. Du khách đang ở xa điểm được chọn: vẫn cho nghe, chỉ hiện khoảng cách để tham khảo, không chặn. 1a. Danh sách điểm trống: báo “Địa danh chưa có điểm tham quan”.  |
 
 ### 	**3.3.10.3 Activity Diagram![][image11]**
+
+### **3.3.11 UC11 - Đếm lượt truy cập**
+
+#### 		**3.3.11.1 Sơ đồ Use Case chi tiết**
+
+#### 		**3.3.11.2 Bảng đặc tả**
+
+| Mục | Nội dung |
+| :---- | :---- |
+| Mã / Tên | UC11 - Đếm lượt truy cập |
+| Actor | Du khách (gửi tín hiệu), Admin (xem số liệu) |
+| Mô tả | Web Client tự gửi tín hiệu sống ẩn danh khi du khách ở trang tham quan; hệ thống thống kê số phiên đang hoạt động và tổng số phiên đã truy cập, hiển thị cho Admin |
+| Tiền điều kiện | Du khách đang mở Web Client (chức năng không áp dụng cho trang /admin); Admin đã đăng nhập để xem số liệu |
+| Hậu điều kiện | Phiên du khách được ghi/cập nhật vào bảng visitor\_sessions; Admin thấy số liệu được làm mới |
+| Luồng chính | 1\. Du khách mở trang, web sinh một mã phiên ngẫu nhiên và lưu vào sessionStorage. 2\. Web gửi tín hiệu (API10) kèm mã phiên ngay khi vào và lặp lại mỗi 30 giây. 3\. Backend ghi mới hoặc cập nhật last\_seen\_at của phiên đó. 4\. Admin mở trang quản lý điểm, web gọi API11 mỗi 10 giây. 5\. Backend đếm số phiên có tín hiệu trong 2 phút gần nhất và tổng số phiên, trả về để hiển thị. |
+| Input | sessionId (mã phiên ngẫu nhiên, 8–64 ký tự, không chứa thông tin cá nhân) |
+| Output | API10: 204 (ghi nhận, không trả nội dung). API11: số phiên đang hoạt động và tổng số phiên |
+| Luồng ngoại lệ | 2a. Gửi tín hiệu lỗi hoặc mất mạng: bỏ qua, lần gửi 30 giây sau tự thử lại, không hiện thông báo cho du khách. 3a. sessionId thiếu hoặc sai định dạng: API10 trả 400. 5a. Token hết hạn: API11 trả 401, đưa về trang đăng nhập (UC07). 5b. Phiên ngừng gửi tín hiệu quá 2 phút: không còn được tính là "đang hoạt động". Phiên cũ hơn 90 ngày được dọn tự động mỗi ngày một lần. |
+
+#### 		**3.3.11.3 Activity Diagram**
 
 # 	**CHƯƠNG 4\. YÊU CẦU PHI CHỨC NĂNG** 
 
@@ -424,7 +447,7 @@ Công cụ: GitHub Actions. Quy trình gồm các bước theo thứ tự:
 
 ## **5.2 Mô tả các bảng** 
 
-Cơ sở dữ liệu MySQL 8.0, tên database: narration\_db. Gồm 5 bảng: locations, location\_translations, pois, poi\_translations, admins. Quan hệ: 1 location có nhiều poi (1-n); 1 poi có nhiều poi\_translations, mỗi ngôn ngữ một dòng (1-n).
+Cơ sở dữ liệu MySQL 8.0, tên database: narration\_db. Gồm 6 bảng: locations, location\_translations, pois, poi\_translations, admins, visitor\_sessions. Quan hệ: 1 location có nhiều poi (1-n); 1 poi có nhiều poi\_translations, mỗi ngôn ngữ một dòng (1-n). Bảng visitor\_sessions không có khóa ngoại (du khách truy cập ẩn danh).
 
 ### **5.2.1 Bảng locations (địa danh)** 
 
@@ -492,6 +515,18 @@ Xóa poi thì xóa theo các dòng nội dung của poi đó (ON DELETE CASCADE)
 Ràng buộc duy nhất: (location\_id, lang). Xóa location thì xóa theo các bản dịch (ON DELETE CASCADE).  
 Cột name và description của bảng locations là bản gốc tiếng Việt, dùng khi thiếu bản dịch. Nội dung bảng này nạp bằng dữ liệu mẫu (chỉ có một địa danh), chưa có giao diện Admin để sửa.
 
+### **5.2.6 Bảng visitor\_sessions (phiên truy cập của du khách)**
+
+Bảng này phục vụ tính năng đếm lượt truy cập (UC11, API10/API11). Du khách truy cập ẩn danh nên bảng **không có khóa ngoại**: mỗi dòng chỉ là một mã phiên ngẫu nhiên do trình duyệt sinh, không lưu thông tin cá nhân.
+
+| Cột | Kiểu dữ liệu | Ràng buộc | Ghi chú |
+| :---- | :---- | :---- | :---- |
+| session\_id | VARCHAR(64) | PK | Mã phiên ngẫu nhiên 8–64 ký tự do Web Client sinh, lưu ở sessionStorage |
+| first\_seen\_at | TIMESTAMP | NOT NULL, DEFAULT CURRENT\_TIMESTAMP | Lần đầu ghi nhận phiên |
+| last\_seen\_at | TIMESTAMP | NOT NULL, DEFAULT CURRENT\_TIMESTAMP ON UPDATE CURRENT\_TIMESTAMP | Nhịp tim 30 giây chỉ cập nhật cột này (INSERT ... ON DUPLICATE KEY UPDATE), không sinh thêm dòng |
+
+Quy tắc nghiệp vụ: "đang hoạt động" = có tín hiệu trong 2 phút gần nhất; phiên cũ hơn 90 ngày được dọn tự động mỗi ngày một lần lúc khởi động backend. Có chỉ mục idx\_visitor\_sessions\_last\_seen trên cột last\_seen\_at để phép đếm và dọn dẹp hiệu quả.
+
 ## **5.3 Component Diagram** 
 
 ## **5.4 Deployment Diagram** 
@@ -515,6 +550,8 @@ Quyền "Công khai" nghĩa là không cần đăng nhập. Quyền "Admin" yêu
 | API07 | GET | /api/content/pois/:id/translations  | Admin | UC09  | Lấy nội dung của điểm ở tất cả ngôn ngữ  |
 | API08 | PUT | /api/content/pois/:id/translations/:lang  | Admin | UC09  | Lưu văn bản và tải file mp3 cho một ngôn ngữ (dữ liệu dạng multipart); ghi đè nếu đã có  |
 | API09 | GET | /api/health  | Công khai | CI/CD | Kiểm tra backend còn chạy, dùng cho pipeline và Docker  |
+| API10 | POST | /api/content/presence | Công khai | UC11 | Ghi nhận tín hiệu sống của một phiên du khách (đếm truy cập) |
+| API11 | GET | /api/content/presence/count | Admin | UC11 | Trả số phiên đang hoạt động và tổng số phiên đã truy cập |
 
 	File audio được phục vụ dưới dạng file tĩnh tại /uploads/audio/\<tên file\>; đường dẫn này được lưu vào cột audio\_url của bảng poi\_translations.
 
@@ -555,7 +592,7 @@ Ví dụ: GET /api/content/locations/1
   "name": "Dinh Độc Lập",  
   "description": "Mô tả ngắn hiển thị ở trang chào",  
   "pois": \[  
-    {  
+    {   
       "id": 5,  
       "name": "Sảnh chính",  
       "latitude": 10.7769000,  
@@ -737,6 +774,38 @@ name (chuỗi, không bắt buộc, tối đa 255 ký tự; trống thì xóa b�
 Không cần đăng nhập. Nếu kết nối MySQL lỗi thì trả 503:  
 { "status": "error" }
 
+**API10 \- POST /api/content/presence**   
+Công khai, không cần đăng nhập. Web Client gửi ngay khi du khách vào trang tham quan và lặp lại mỗi 30 giây (nhịp tim); không áp dụng cho trang /admin.
+
+Request body:  
+{  
+  "sessionId": "3f2a9c...b7"  
+}
+
+sessionId là mã phiên ngẫu nhiên 8–64 ký tự, chỉ gồm chữ, số, gạch ngang/gạch dưới, do trình duyệt sinh và lưu ở sessionStorage (mỗi tab một phiên).
+
+204 No Content (đã ghi nhận, không trả nội dung):  
+(empty)
+
+400 Bad Request (thiếu sessionId hoặc sai định dạng):  
+{ "message": "Mã phiên không hợp lệ" }
+
+Mọi lỗi khi gửi (mất mạng, backend lỗi) đều được Web Client bỏ qua và tự thử lại ở nhịp 30 giây kế tiếp; du khách không thấy thông báo nào.
+
+**API11 \- GET /api/content/presence/count**   
+Header: Authorization: Bearer \<JWT\> (chỉ Admin). Trang quản lý điểm gọi lặp lại mỗi 10 giây để làm mới số liệu.
+
+200 OK:  
+{  
+  "activeSessions": 3,  
+  "totalSessions": 42  
+}
+
+activeSessions: số phiên có tín hiệu trong 2 phút gần nhất; totalSessions: tổng số phiên từng được ghi nhận (phiên cũ hơn 90 ngày đã bị dọn).
+
+401 Unauthorized (thiếu hoặc hết hạn token):  
+{ "message": "Phiên đăng nhập đã hết hạn" }
+
 # **CHƯƠNG 7\. GIAO DIỆN VÀ TRẢI NGHIỆM** 
 
 ## **7.1 Wireframe dạng text**
@@ -789,15 +858,16 @@ Trạng thái đặc biệt:
 \- Bị đưa về từ trang khác vì token hết hạn: hiện "Phiên đăng nhập đã hết hạn"  
 \- Đăng nhập thành công: chuyển vào trang Quản lý điểm tham quan
 
-### **7.1.4 Admin \- Quản lý điểm tham quan (UC08)**
+### **7.1.4 Admin \- Quản lý điểm tham quan (UC08, UC11)**
 
 Bố cục: thanh menu bên trái (Điểm tham quan, Nội dung thuyết minh, Đăng xuất); phần chính bên phải  
-1\. Thanh tiêu đề: "Quản lý điểm tham quan" và nút "Thêm điểm"  
+1\. Thanh tiêu đề: "Quản lý điểm tham quan", hai thẻ thống kê lượt truy cập (số người đang online trong 2 phút gần nhất, tổng số phiên truy cập; làm mới mỗi 10 giây qua API11) và nút "Thêm điểm"  
 2\. Bảng danh sách: cột Tên, Vĩ độ, Kinh độ, Bán kính (m), Thứ tự, và cột thao tác có nút "Sửa", "Xóa"  
 3\. Biểu mẫu Thêm/Sửa (hộp thoại): ô Tên, Bán kính (mặc định 10), Thứ tự, bản đồ để bấm chọn tọa độ hoặc kéo marker, ô nhập tay vĩ độ và kinh độ; nút "Lưu" và "Hủy"  
 4\. Hộp thoại xác nhận xóa: ghi rõ "Sẽ xóa cả nội dung và audio của điểm này" và hai nút "Xóa", "Hủy"
 
 Trạng thái đặc biệt:  
+\- Lỗi kết nối lấy số liệu truy cập: hiện dải cảnh báo "Không cập nhật được số người truy cập", số liệu giữ nguyên và tự thử lại ở chu kỳ tiếp theo (UC11)  
 \- Dữ liệu sai: báo lỗi ngay tại ô tương ứng (thiếu tên, chưa chọn tọa độ, bán kính ngoài 1 đến 100, trùng tên)  
 \- Lưu thành công: đóng hộp thoại, bảng tải lại, hiện thông báo thành công  
 \- Mất mạng hoặc backend lỗi: giữ nguyên dữ liệu đang nhập, báo lỗi và có nút "Thử lại"  
@@ -840,6 +910,7 @@ Trạng thái đặc biệt:
 | Thông báo thành công hoặc lỗi nhanh  | message  | 7.1.3, 7.1.4, 7.1.5  |
 | Biểu mẫu và các ô nhập  | Form, Input, Input.Password, InputNumber  | 7.1.3, 7.1.4, 7.1.5  |
 | Bảng danh sách điểm  | Table | 7.1.4  |
+| Thống kê lượt truy cập | Card, Statistic | 7.1.4 |
 | Hộp thoại thêm/sửa  | Modal | 7.1.4  |
 | Xác nhận xóa, ghi đè  | Modal.confirm hoặc Popconfirm  | 7.1.4, 7.1.5  |
 | Khung và thanh menu bên trái  | Layout, Menu  | 7.1.4, 7.1.5  |
