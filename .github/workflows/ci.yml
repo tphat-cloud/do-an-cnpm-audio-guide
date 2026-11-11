@@ -1,0 +1,47 @@
+name: CI Pipeline
+
+# Quy trình CI theo PRD 4.5.1: chạy mỗi khi đẩy code hoặc tạo Pull Request
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Lint, Type-check, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Lấy mã nguồn (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            vite-project/package-lock.json
+
+      - name: 1b. Cài thư viện Backend & Frontend (npm ci)
+        run: |
+          npm --prefix backend ci
+          npm --prefix vite-project ci
+
+      - name: 2. Kiểm tra mã (ESLint) và kiểu TypeScript (Type-check)
+        run: |
+          npm --prefix vite-project run lint
+          npx --prefix backend tsc -p backend/tsconfig.json --noEmit
+          npx --prefix vite-project tsc -b vite-project/tsconfig.json
+
+      - name: 3. Chạy kiểm thử tự động cho Backend (npm test)
+        run: npm --prefix backend test
+
+      - name: 4. Build Backend và Frontend
+        run: |
+          npm --prefix backend run build
+          npm --prefix vite-project run build
