@@ -43,7 +43,7 @@
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | B2 | Dockerfile cho backend + frontend; compose mount volume `/uploads/audio` | backend / DevOps | 4.5.3 | TB | ✅ done (PR#6) | Phát |
-| B3 | Viết test tự động cho API (POI CRUD + auth + fallback ngôn ngữ) | backend | 4.5.1 | TB | 🔒 doing | Phát |
+| B3 | Viết test tự động cho API (POI CRUD + auth + fallback ngôn ngữ) | backend | 4.5.1 | TB | ✅ done (PR#8) | Phát |
 | F4 | Thông báo "Bạn đang ở ngoài khu tham quan" (>1 km) | FE Du khách | UC06-5a | TB | TODO | - |
 | F5 | Phát audio im lặng mở khóa tự phát ngay khi bấm "Bắt đầu" | FE Du khách | UC02-b2, BR07 | TB | TODO | - |
 | A1 | Rà + hoàn thiện Admin thêm/sửa/xóa, đồng bộ danh sách sau lưu | FE Admin | UC08 | TB | TODO | - |
@@ -55,7 +55,7 @@
 
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| B4 | CI/CD GitHub Actions: lint → type-check → test → build, chặn merge khi đỏ | DevOps | 4.5.1 | Thấp | TODO | - |
+| B4 | CI/CD GitHub Actions: lint → type-check → test → build, chặn merge khi đỏ | DevOps | 4.5.1 | Thấp | 🔒 doing | Phát |
 | B5 | Bật branch protection cho `main` (yêu cầu PR + review) | DevOps | 4.5.3 | Thấp | TODO | - |
 | D6 | Vẽ sơ đồ còn thiếu: 5.1 ERD, 5.3 Component, 5.4 Deployment + Activity Diagram | docs | 5.1, 5.3, 5.4 | Thấp | TODO | - |
 | D7 | README hướng dẫn chạy dự án (setup, env, lệnh) | docs | - | Thấp | TODO | - |
