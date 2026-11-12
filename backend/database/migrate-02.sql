@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS location_translations (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- 5.2.3 Bổ sung cột name vào poi_translations (tên điểm theo ngôn ngữ).
--- MySQL 8.0 không có ALTER TABLE ... ADD COLUMN IF NOT EXISTS nên phải kiểm tra
+-- MySQL 8.0 không có ALTER TABLE ... ADD COLUMN IF NOT EXISTS nên phải kiểm tra và debug lỗi
 -- information_schema trong một thủ tục tạm; thủ tục bị xóa ngay sau khi chạy.
 DROP PROCEDURE IF EXISTS migrate_02_add_poi_translation_name;
 
