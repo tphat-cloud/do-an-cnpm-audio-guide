@@ -6,7 +6,7 @@ import multer from 'multer';
 /**
  * Nhận file audio thuyết minh (PRD 2.7.3, 6.1, 6.2 - API08).
  *
- * File nằm ngoài `src`, cạnh thư mục `database`: backend/uploads/audio/
+ * File nằm ngoài `src`: backend/content-service/uploads/audio/
  * và được phục vụ tĩnh tại /uploads/audio/<tên file>.
  */
 
