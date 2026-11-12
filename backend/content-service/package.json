@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "tsc -p tsconfig.test.json --noEmit && node --import ./test/setup.cjs --import tsx --test test/content.test.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.8",

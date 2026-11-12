@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/__tests__/api.test.ts"
+    "test": "npm run test --prefix auth-service && npm run test --prefix content-service"
   },
   "keywords": [],
   "author": "",
