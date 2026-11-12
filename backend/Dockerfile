@@ -20,7 +20,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 
-# Tạo sẵn thư mục lưu file thuyết minh .mp3 (được gắn volume ở docker-compose.yml)
+# Tạo sẵn thư mục lưu file thuyết minh .mp3 và du khách đi đến đâu thì thuyết minh được chạy đến đó (được gắn volume ở docker-compose.yml)
 RUN mkdir -p /app/uploads/audio
 
 EXPOSE 5000
