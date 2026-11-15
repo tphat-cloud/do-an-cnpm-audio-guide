@@ -1,81 +1,139 @@
-# Docker Compose - Chạy MySQL 8.0 cho đồ án
-# Lệnh chạy: docker compose up -d
-# Lệnh tắt:  docker compose down
+# Docker Compose - Chạy các service của đồ án
+# Tạo .env từ .env.example, điền các secret rồi chạy: docker compose up -d --build
+# Lệnh tắt: docker compose down
 
-# Pin tên project để không phụ thuộc tên thư mục chứa file này
-# (mỗi người clone vào folder tên khác nhau vẫn dùng chung một bộ tài nguyên,
-#  và tránh lỗi "container name is already in use" khi đổi chỗ đặt repo).
-# Giữ đúng tên "doancnpm" mà volume dữ liệu đang mang (volume của compose
-#  có tiền tố = tên project → đổi tên project sẽ sinh volume RỖNG khác).
+# Giữ nguyên project name để giữ volume database đang tồn tại.
 name: doancnpm
 
 services:
-  # === MySQL Database ===
   mysql:
     image: mysql:8.0
     container_name: doan-mysql
-    restart: always
+    restart: unless-stopped
     ports:
-      - "3306:3306"           # Truy cập MySQL qua localhost:3306
+      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root123        # Mật khẩu root
-      MYSQL_DATABASE: narration_db        # Tên database tự tạo sẵn
-      MYSQL_USER: doan_user               # User cho ứng dụng
-      MYSQL_PASSWORD: doan_pass123        # Mật khẩu user
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:-narration_db}
+      MYSQL_USER: ${DB_USER:-doan_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
-      - mysql_data:/var/lib/mysql         # Lưu data, không mất khi tắt container
-      # Chỉ chạy 1 lần khi volume MySQL còn trống: tạo 4 bảng + dữ liệu mẫu
+      - mysql_data:/var/lib/mysql
       - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--silent"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # === Backend API (Express + TypeScript) ===
-  backend:
+  auth-service:
     build:
-      context: ./backend
+      context: ./backend/auth-service
       dockerfile: Dockerfile
-    container_name: doan-backend
-    restart: always
+    container_name: doan-auth-service
+    restart: unless-stopped
     ports:
-      - "5000:5000"           # Truy cập API trực tiếp qua localhost:5000 (GET /api/health)
-    env_file:
-      - path: ./backend/.env
-        required: false
+      - "3001:3001"
     environment:
-      PORT: 5000
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      DB_HOST: mysql          # Kết nối tới container mysql qua mạng nội bộ Docker
+      PORT: 3001
+      DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: ${DB_USER:-doan_user}
-      DB_PASSWORD: ${DB_PASSWORD:-doan_pass123}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       DB_NAME: ${DB_NAME:-narration_db}
-      JWT_SECRET: ${JWT_SECRET:-doi_thanh_chuoi_ngau_nhien_toi_thieu_32_ky_tu}
-    volumes:
-      # Gắn volume lưu file audio (/uploads/audio) để không mất file khi khởi động lại container (PRD 4.5.3)
-      - ./backend/uploads/audio:/app/uploads/audio
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-  # === Frontend Web Client & Admin Dashboard (React + Vite + Nginx) ===
+  content-service:
+    build:
+      context: ./backend/content-service
+      dockerfile: Dockerfile
+    container_name: doan-content-service
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-doan_user}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_NAME: ${DB_NAME:-narration_db}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    volumes:
+      - ./backend/content-service/uploads/audio:/app/uploads/audio
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3002/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: doan-api-gateway
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      AUTH_SERVICE_URL: http://auth-service:3001
+      CONTENT_SERVICE_URL: http://content-service:3002
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      content-service:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      default:
+        aliases:
+          # vite-project/nginx.conf retains its existing `backend:5000` upstream.
+          - backend
+
   frontend:
     build:
       context: ./vite-project
       dockerfile: Dockerfile
     container_name: doan-frontend
-    restart: always
+    restart: unless-stopped
     ports:
-      - "5173:80"             # Mở Web tại http://localhost:5173
+      - "5173:80"
     depends_on:
-      - backend
+      api-gateway:
+        condition: service_healthy
 
-# Không đưa phpMyAdmin vào compose: mỗi người dùng client CSDL riêng (DBeaver...)
-# kết nối localhost:3306, đỡ chiếm port và nhẹ máy khi chạy demo.
-
-# Volumes giữ data khi container bị xóa
 volumes:
   mysql_data:

@@ -24,24 +24,43 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: |
-            backend/package-lock.json
+            backend/auth-service/package-lock.json
+            backend/content-service/package-lock.json
+            backend/api-gateway/package-lock.json
             vite-project/package-lock.json
 
-      - name: 1b. Cài thư viện Backend & Frontend (npm ci)
+      - name: 1b. Cài thư viện cho từng service và frontend
         run: |
-          npm --prefix backend ci
+          npm --prefix backend/auth-service ci
+          npm --prefix backend/content-service ci
+          npm --prefix backend/api-gateway ci
           npm --prefix vite-project ci
 
-      - name: 2. Kiểm tra mã (ESLint) và kiểu TypeScript (Type-check)
+      - name: 2. Lint frontend
+        run: npm --prefix vite-project run lint
+
+      - name: 3. Type-check từng service và frontend
         run: |
-          npm --prefix vite-project run lint
-          npx --prefix backend tsc -p backend/tsconfig.json --noEmit
+          npm --prefix backend/auth-service run typecheck
+          npm --prefix backend/content-service run typecheck
+          npm --prefix backend/api-gateway run typecheck
           npx --prefix vite-project tsc -b vite-project/tsconfig.json
 
-      - name: 3. Chạy kiểm thử tự động cho Backend (npm test)
-        run: npm --prefix backend test
-
-      - name: 4. Build Backend và Frontend
+      - name: 4. Chạy test từng service
         run: |
-          npm --prefix backend run build
+          npm --prefix backend/auth-service test
+          npm --prefix backend/content-service test
+          npm --prefix backend/api-gateway test
+
+      - name: 5. Build từng service và frontend
+        run: |
+          npm --prefix backend/auth-service run build
+          npm --prefix backend/content-service run build
+          npm --prefix backend/api-gateway run build
           npm --prefix vite-project run build
+
+      - name: 6. Build Docker images (không push hoặc deploy)
+        run: |
+          docker build --file backend/auth-service/Dockerfile --tag doancnpm/auth-service:ci backend/auth-service
+          docker build --file backend/content-service/Dockerfile --tag doancnpm/content-service:ci backend/content-service
+          docker build --file backend/api-gateway/Dockerfile --tag doancnpm/api-gateway:ci backend/api-gateway

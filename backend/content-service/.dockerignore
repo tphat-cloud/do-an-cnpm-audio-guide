@@ -1,7 +1,7 @@
 node_modules
 dist
+test
 uploads
 .env
 *.local
 npm-debug.log*
-
