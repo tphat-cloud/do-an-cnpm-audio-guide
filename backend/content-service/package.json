@@ -5,6 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "tsc -p tsconfig.test.json --noEmit && node --import ./test/setup.cjs --import tsx --test test/content.test.ts"
