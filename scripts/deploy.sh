@@ -20,7 +20,13 @@ printf '%s\n' "$IMAGE_TAG" > "$TAG_FILE"
 docker compose pull
 docker compose up -d --no-build --remove-orphans
 
-if curl -fsS --retry 10 --retry-delay 3 http://127.0.0.1:5000/api/health; then
+ok=0
+for _ in $(seq 1 30); do
+  if curl -fsS http://127.0.0.1:5000/api/health >/dev/null 2>&1; then ok=1; break; fi
+  sleep 2
+done
+
+if [[ "$ok" -eq 1 ]]; then
   echo "Deployment health check passed for IMAGE_TAG=$IMAGE_TAG."
   exit 0
 fi

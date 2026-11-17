@@ -148,11 +148,12 @@ jobs:
       group: production
       cancel-in-progress: false
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy
+      - name: Deploy in demo working copy
         shell: bash
         env:
           IMAGE_TAG: sha-${{ github.sha }}
-        run: bash scripts/deploy.sh
+        run: |
+          # Không dùng actions/checkout: runner phải chạy trong thư mục demo thật,
+          # nơi có .env và volume audio; code mới đã nằm trong image trên GHCR.
+          cd /c/Dev/do-an-cnpm-audio-guide
+          bash scripts/deploy.sh
