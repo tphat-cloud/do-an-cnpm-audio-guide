@@ -56,6 +56,8 @@ export interface UiText {
   demoExpand: string;
   /** Toast khi geofence tự phát thuyết minh; {name} được thay bằng tên điểm (UC04). */
   geofenceToast: string;
+  weakGpsWarning: string;
+  weakGpsHelp: string;
   /** Khoảng cách còn lại trong popup marker; {distance} là số đã định dạng (UC06/UC10). */
   distanceFromYou: string;
 }
@@ -101,6 +103,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoCollapse: 'Thu gọn',
     demoExpand: 'Mở rộng',
     geofenceToast: 'Bạn đã đến {name}, đang phát thuyết minh...',
+    weakGpsWarning: 'Tín hiệu GPS yếu',
+    weakGpsHelp: 'Độ chính xác vị trí trên 30 m. Bạn có thể chọn điểm tham quan thủ công.',
     distanceFromYou: 'Cách bạn {distance}',
   },
   en: {
@@ -143,6 +147,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoCollapse: 'Collapse',
     demoExpand: 'Expand',
     geofenceToast: 'You have arrived at {name}, playing narration...',
+    weakGpsWarning: 'Weak GPS signal',
+    weakGpsHelp: 'Location accuracy is over 30 m. You can select a point manually.',
     distanceFromYou: '{distance} away',
   },
   zh: {
@@ -185,6 +191,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoCollapse: '收起',
     demoExpand: '展开',
     geofenceToast: '您已到达{name}，正在播放讲解...',
+    weakGpsWarning: 'GPS 信号较弱',
+    weakGpsHelp: '定位精度超过 30 米。您可以手动选择景点。',
     distanceFromYou: '距您 {distance}',
   },
   ko: {
@@ -227,6 +235,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoCollapse: '축소',
     demoExpand: '확대',
     geofenceToast: '{name}에 도착했습니다. 해설을 재생합니다...',
+    weakGpsWarning: 'GPS 신호가 약합니다',
+    weakGpsHelp: '위치 정확도가 30m를 초과합니다. 관광지를 직접 선택할 수 있습니다.',
     distanceFromYou: '{distance} 거리',
   },
   ja: {
@@ -269,6 +279,8 @@ export const MESSAGES: Record<Lang, UiText> = {
     demoCollapse: '折りたたむ',
     demoExpand: '展開',
     geofenceToast: '{name}に到着しました。解説を再生します...',
+    weakGpsWarning: 'GPS信号が弱いです',
+    weakGpsHelp: '位置の精度が30mを超えています。見どころを手動で選択できます。',
     distanceFromYou: '距離 {distance}',
   },
 };
