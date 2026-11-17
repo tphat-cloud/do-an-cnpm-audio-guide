@@ -36,12 +36,19 @@ const PRESENCE_POLL_MS = 10_000;
  * cần gọi API nên được ghép thêm trong component.
  */
 const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
-  { title: 'Tên', dataIndex: 'name', key: 'name', ellipsis: true },
+  {
+    title: 'Tên',
+    dataIndex: 'name',
+    key: 'name',
+    ellipsis: true,
+    sorter: (a, b) => a.name.localeCompare(b.name, 'vi'),
+  },
   {
     title: 'Vĩ độ',
     dataIndex: 'latitude',
     key: 'latitude',
     width: 150,
+    sorter: (a, b) => a.latitude - b.latitude,
     render: (value: number) => value.toFixed(7),
   },
   {
@@ -49,6 +56,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     dataIndex: 'longitude',
     key: 'longitude',
     width: 150,
+    sorter: (a, b) => a.longitude - b.longitude,
     render: (value: number) => value.toFixed(7),
   },
   {
@@ -57,6 +65,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     key: 'radiusM',
     width: 130,
     align: 'right',
+    sorter: (a, b) => a.radiusM - b.radiusM,
   },
   {
     title: 'Thứ tự',
@@ -64,6 +73,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     key: 'orderIndex',
     width: 100,
     align: 'right',
+    sorter: (a, b) => a.orderIndex - b.orderIndex,
   },
 ];
 
