@@ -8,7 +8,7 @@ import {
   RightOutlined,
 } from '@ant-design/icons';
 import { fetchPoiNarration } from '../api/content';
-import { AudioPlayer } from '../components/AudioPlayer';
+import { AudioPlayer, type PlayerState } from '../components/AudioPlayer';
 import { DemoGpsPanel } from '../components/DemoGpsPanel';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TourMap } from '../components/TourMap';
@@ -60,8 +60,16 @@ export function TourPage() {
   const narrationRef = useRef<HTMLDivElement | null>(null);
   // Bỏ qua phản hồi cũ khi du khách đổi điểm hoặc đổi ngôn ngữ liên tiếp.
   const narrationRequestRef = useRef(0);
+  // Trạng thái trình phát để biết bài đang phát dở hay đã kết thúc (UC04 - 5b).
+  const [playerState, setPlayerState] = useState<PlayerState>('idle');
+  // Điểm geofence chờ phát sau khi bài hiện tại kết thúc.
+  const pendingPoiIdsRef = useRef<number[]>([]);
+  const advanceQueueRef = useRef<() => void>(() => {});
 
   const text = MESSAGES[lang];
+  // Đang phát, tạm dừng hoặc đang tải bài mới đều tính là đang bận.
+  const playerBusy =
+    playerState === 'playing' || playerState === 'paused' || narrationStatus === 'loading';
   const weakGps = !demoEnabled && fix?.source === 'real' && fix.accuracy > MAX_ACCURACY_M;
   const gpsIssue =
     gpsStatus === 'denied' || gpsStatus === 'unavailable' || gpsStatus === 'unsupported'
@@ -109,8 +117,12 @@ export function TourPage() {
 
         setNarration(data);
         setNarrationStatus('ready');
-        // Điểm không có audio thì không thể nghe, đánh dấu ngay để danh sách phản hồi.
-        if (!data.audioUrl) markListened(data.poiId);
+        // Điểm không có audio thì không thể nghe, đánh dấu ngay và bỏ qua để
+        // hàng chờ không bị kẹt ở một bài không phát được.
+        if (!data.audioUrl) {
+          markListened(data.poiId);
+          advanceQueueRef.current();
+        }
       } catch {
         if (narrationRequestRef.current !== requestId) return;
         setNarrationStatus('error');
@@ -119,9 +131,10 @@ export function TourPage() {
     [markListened]
   );
 
-  /** Chọn điểm thủ công - phát ngay, kể cả đang phát điểm khác (UC10 - 5a). */
-  const handleSelectPoi = useCallback(
+  /** Phát một điểm ngay, không đụng tới hàng chờ. */
+  const playPoi = useCallback(
     (poiId: number) => {
+      setPlayerState('idle');
       setSelectedPoiId(poiId);
       setSelectionNonce((nonce) => nonce + 1);
       setAutoPlay(true);
@@ -130,17 +143,59 @@ export function TourPage() {
     [lang, loadNarration]
   );
 
-  // Geofence luôn gọi handler mới nhất mà không phải đăng ký lại listener.
-  const selectPoiRef = useRef(handleSelectPoi);
+  /** Chọn điểm thủ công - phát ngay và bỏ hàng chờ (UC10 - 5a). */
+  const handleSelectPoi = useCallback(
+    (poiId: number) => {
+      pendingPoiIdsRef.current = [];
+      playPoi(poiId);
+    },
+    [playPoi]
+  );
+
+  /** Bài hiện tại xong hoặc lỗi: phát bài kế tiếp trong hàng chờ (UC04 - 5b). */
+  const playNextQueued = useCallback(() => {
+    const nextPoiId = pendingPoiIdsRef.current.shift();
+    if (nextPoiId !== undefined) playPoi(nextPoiId);
+  }, [playPoi]);
 
   useEffect(() => {
-    selectPoiRef.current = handleSelectPoi;
-  }, [handleSelectPoi]);
+    advanceQueueRef.current = playNextQueued;
+  }, [playNextQueued]);
+
+  /**
+   * Geofence: đang phát hoặc tạm dừng bài khác thì đưa điểm mới vào hàng chờ
+   * thay vì cắt ngang (UC04 - 5b).
+   */
+  const handleGeofencePoi = useCallback(
+    (poi: PoiSummary) => {
+      if (poi.id === selectedPoiId) return;
+
+      if (playerBusy) {
+        if (!pendingPoiIdsRef.current.includes(poi.id)) {
+          pendingPoiIdsRef.current.push(poi.id);
+        }
+        void message.info(text.queueToast.replace('{name}', poi.name));
+        return;
+      }
+
+      playPoi(poi.id);
+      void message.info(text.geofenceToast.replace('{name}', poi.name));
+    },
+    [message, playPoi, playerBusy, selectedPoiId, text]
+  );
+
+  // Geofence luôn gọi handler mới nhất mà không phải đăng ký lại listener.
+  const triggerPoiRef = useRef(handleGeofencePoi);
+
+  useEffect(() => {
+    triggerPoiRef.current = handleGeofencePoi;
+  }, [handleGeofencePoi]);
 
   /** Đổi ngôn ngữ: dừng audio hiện tại, tải lại nội dung, không tự phát (UC03). */
   const handleChangeLang = (next: Lang) => {
     if (next === lang) return;
 
+    pendingPoiIdsRef.current = [];
     setAutoPlay(false);
     setLang(next);
 
@@ -174,14 +229,11 @@ export function TourPage() {
       if (tour.listenedPoiIds.includes(hit.poi.id)) return;
 
       tour.markTriggered(hit.poi.id);
-      selectPoiRef.current(hit.poi.id);
-      void message.info(
-        MESSAGES[tour.lang].geofenceToast.replace('{name}', hit.poi.name)
-      );
+      triggerPoiRef.current(hit.poi);
     };
 
     return useGpsStore.subscribe((state) => onFix(state.fix));
-  }, [message]);
+  }, []);
 
   if (!location || status === 'idle' || status === 'loading') {
     return (
@@ -363,6 +415,9 @@ export function TourPage() {
                         autoPlay={autoPlay}
                         text={text}
                         onStarted={() => markListened(narration.poiId)}
+                        onStateChange={setPlayerState}
+                        onEnded={playNextQueued}
+                        onError={playNextQueued}
                       />
                     ) : (
                       <Alert type="warning" showIcon title={text.noAudioNotice} />

@@ -10,10 +10,16 @@ interface Props {
   text: UiText;
   /** Audio bắt đầu phát thật sự (không tính lúc bị trình duyệt chặn). */
   onStarted: () => void;
+  /** Trạng thái trình phát đổi; TourPage dùng để biết bài đang phát dở hay đã xong. */
+  onStateChange?: (state: PlayerState) => void;
+  /** Bài hiện tại kết thúc: TourPage phát tiếp bài trong hàng chờ (UC04 - 5b). */
+  onEnded?: () => void;
+  /** File audio lỗi: TourPage bỏ qua và phát bài kế tiếp trong hàng chờ (UC04 - 5b). */
+  onError?: () => void;
 }
 
 /** idle: chưa phát, paused: tạm dừng, ended: đã nghe xong (PRD 2.7.4). */
-type PlayerState = 'idle' | 'playing' | 'paused' | 'ended' | 'blocked' | 'error';
+export type PlayerState = 'idle' | 'playing' | 'paused' | 'ended' | 'blocked' | 'error';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
@@ -27,11 +33,23 @@ function formatTime(seconds: number): string {
  * Trình phát thuyết minh (UC05 - PRD 7.1.2): thẻ audio HTML5 kèm nút bấm
  * Tạm dừng / Phát tiếp / Nghe lại, thanh tiến độ và các trạng thái lỗi.
  */
-export function AudioPlayer({ src, autoPlay, text, onStarted }: Props) {
+export function AudioPlayer({
+  src,
+  autoPlay,
+  text,
+  onStarted,
+  onStateChange,
+  onEnded,
+  onError,
+}: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<PlayerState>('idle');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    onStateChange?.(state);
+  }, [state, onStateChange]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -109,8 +127,14 @@ export function AudioPlayer({ src, autoPlay, text, onStarted }: Props) {
         onPause={() => setState((prev) => (prev === 'playing' ? 'paused' : prev))}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
-        onEnded={() => setState('ended')}
-        onError={() => setState('error')}
+        onEnded={() => {
+          setState('ended');
+          onEnded?.();
+        }}
+        onError={() => {
+          setState('error');
+          onError?.();
+        }}
       />
 
       {state === 'error' ? (
