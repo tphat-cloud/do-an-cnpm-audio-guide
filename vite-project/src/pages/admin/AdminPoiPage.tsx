@@ -73,6 +73,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
         />
       </Space>
     ),
+  },
   {
     title: 'Bán kính (m)',
     dataIndex: 'radiusM',
