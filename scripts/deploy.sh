@@ -17,7 +17,7 @@ fi
 
 printf '%s\n' "$IMAGE_TAG" > "$TAG_FILE"
 
-docker compose pull
+docker compose pull auth-service content-service api-gateway frontend
 docker compose up -d --no-build --remove-orphans
 
 ok=0
@@ -35,7 +35,8 @@ echo "ERROR: health check failed for IMAGE_TAG=$IMAGE_TAG." >&2
 if [[ -n "$PREVIOUS_TAG" ]]; then
   echo "Rolling back to IMAGE_TAG=$PREVIOUS_TAG." >&2
   printf '%s\n' "$PREVIOUS_TAG" > "$TAG_FILE"
-  if docker compose pull && docker compose up -d --no-build --remove-orphans; then
+  if docker compose pull auth-service content-service api-gateway frontend &&
+    docker compose up -d --no-build --remove-orphans; then
     echo "Rollback commands completed for IMAGE_TAG=$PREVIOUS_TAG." >&2
   else
     echo "ERROR: rollback commands failed for IMAGE_TAG=$PREVIOUS_TAG." >&2
