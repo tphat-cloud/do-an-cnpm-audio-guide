@@ -58,6 +58,13 @@ export interface UiText {
   geofenceToast: string;
   weakGpsWarning: string;
   weakGpsHelp: string;
+  /** UC02-5a, UC04-1b: hướng dẫn bật lại quyền vị trí và chế độ chọn thủ công. */
+  gpsDeniedTitle: string;
+  gpsDeniedHelp: string;
+  gpsUnavailableTitle: string;
+  gpsUnavailableHelp: string;
+  gpsUnsupportedTitle: string;
+  gpsUnsupportedHelp: string;
   /** Khoảng cách còn lại trong popup marker; {distance} là số đã định dạng (UC06/UC10). */
   distanceFromYou: string;
 }
@@ -105,6 +112,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     geofenceToast: 'Bạn đã đến {name}, đang phát thuyết minh...',
     weakGpsWarning: 'Tín hiệu GPS yếu',
     weakGpsHelp: 'Độ chính xác vị trí trên 30 m. Bạn có thể chọn điểm tham quan thủ công.',
+    gpsDeniedTitle: 'Cần quyền truy cập vị trí',
+    gpsDeniedHelp:
+      'Bạn đã từ chối quyền vị trí. Mở cài đặt trang web của trình duyệt (biểu tượng ổ khoá cạnh địa chỉ), chọn "Vị trí" → "Cho phép", rồi bấm Thử lại. Bạn vẫn có thể chọn điểm tham quan thủ công bên dưới.',
+    gpsUnavailableTitle: 'Không lấy được vị trí',
+    gpsUnavailableHelp:
+      'Hãy kiểm tra GPS đang bật và quyền vị trí của trình duyệt, rồi bấm Thử lại. Bạn vẫn có thể chọn điểm tham quan thủ công bên dưới.',
+    gpsUnsupportedTitle: 'Thiết bị không hỗ trợ định vị',
+    gpsUnsupportedHelp:
+      'Trình duyệt này không hỗ trợ định vị. Bạn vẫn có thể chọn điểm tham quan thủ công bên dưới.',
     distanceFromYou: 'Cách bạn {distance}',
   },
   en: {
@@ -149,6 +165,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     geofenceToast: 'You have arrived at {name}, playing narration...',
     weakGpsWarning: 'Weak GPS signal',
     weakGpsHelp: 'Location accuracy is over 30 m. You can select a point manually.',
+    gpsDeniedTitle: 'Location permission needed',
+    gpsDeniedHelp:
+      'You denied location access. Open the browser site settings (lock icon next to the address), set Location to "Allow", then tap Retry. You can still select a point manually below.',
+    gpsUnavailableTitle: 'Could not get your location',
+    gpsUnavailableHelp:
+      'Check that GPS is on and the browser has location permission, then tap Retry. You can still select a point manually below.',
+    gpsUnsupportedTitle: 'This device does not support location',
+    gpsUnsupportedHelp:
+      'This browser does not support geolocation. You can still select a point manually below.',
     distanceFromYou: '{distance} away',
   },
   zh: {
@@ -193,6 +218,14 @@ export const MESSAGES: Record<Lang, UiText> = {
     geofenceToast: '您已到达{name}，正在播放讲解...',
     weakGpsWarning: 'GPS 信号较弱',
     weakGpsHelp: '定位精度超过 30 米。您可以手动选择景点。',
+    gpsDeniedTitle: '需要位置权限',
+    gpsDeniedHelp:
+      '您已拒绝位置权限。请打开浏览器的网站设置（地址栏旁的锁图标），将“位置”设为“允许”，然后点击重试。您仍可在下方手动选择景点。',
+    gpsUnavailableTitle: '无法获取位置',
+    gpsUnavailableHelp:
+      '请检查 GPS 是否开启以及浏览器是否拥有位置权限，然后点击重试。您仍可在下方手动选择景点。',
+    gpsUnsupportedTitle: '此设备不支持定位',
+    gpsUnsupportedHelp: '此浏览器不支持定位功能。您仍可在下方手动选择景点。',
     distanceFromYou: '距您 {distance}',
   },
   ko: {
@@ -237,6 +270,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     geofenceToast: '{name}에 도착했습니다. 해설을 재생합니다...',
     weakGpsWarning: 'GPS 신호가 약합니다',
     weakGpsHelp: '위치 정확도가 30m를 초과합니다. 관광지를 직접 선택할 수 있습니다.',
+    gpsDeniedTitle: '위치 권한이 필요합니다',
+    gpsDeniedHelp:
+      '위치 접근을 거부하셨습니다. 브라우저의 사이트 설정(주소창 옆 자물쇠 아이콘)에서 위치를 "허용"으로 변경한 뒤 다시 시도를 누르세요. 아래에서 관광지를 직접 선택할 수도 있습니다.',
+    gpsUnavailableTitle: '위치를 가져올 수 없습니다',
+    gpsUnavailableHelp:
+      'GPS가 켜져 있고 브라우저에 위치 권한이 있는지 확인한 뒤 다시 시도를 누르세요. 아래에서 관광지를 직접 선택할 수도 있습니다.',
+    gpsUnsupportedTitle: '이 기기는 위치를 지원하지 않습니다',
+    gpsUnsupportedHelp:
+      '이 브라우저는 위치 기능을 지원하지 않습니다. 아래에서 관광지를 직접 선택할 수 있습니다.',
     distanceFromYou: '{distance} 거리',
   },
   ja: {
@@ -281,6 +323,15 @@ export const MESSAGES: Record<Lang, UiText> = {
     geofenceToast: '{name}に到着しました。解説を再生します...',
     weakGpsWarning: 'GPS信号が弱いです',
     weakGpsHelp: '位置の精度が30mを超えています。見どころを手動で選択できます。',
+    gpsDeniedTitle: '位置情報の許可が必要です',
+    gpsDeniedHelp:
+      '位置情報へのアクセスが拒否されています。ブラウザのサイト設定（アドレスバー横の鍵アイコン）で「位置情報」を「許可」に変更し、再試行を押してください。下から見どころを手動で選択することもできます。',
+    gpsUnavailableTitle: '位置情報を取得できません',
+    gpsUnavailableHelp:
+      'GPS がオンで、ブラウザに位置情報の許可があるか確認してから再試行を押してください。下から見どころを手動で選択することもできます。',
+    gpsUnsupportedTitle: 'この端末は位置情報に対応していません',
+    gpsUnsupportedHelp:
+      'このブラウザは位置情報に対応していません。下から見どころを手動で選択できます。',
     distanceFromYou: '距離 {distance}',
   },
 };

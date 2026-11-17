@@ -397,6 +397,11 @@ body {
   margin: 12px 20px 0;
 }
 
+/* Nút thử lại nằm dưới hướng dẫn để nội dung không bị ép hẹp trên máy nhỏ. */
+.stg-gps-notice .stg-gps-retry {
+  margin-top: 10px;
+}
+
 /* Chỉ báo nhỏ khi tải lại địa danh do đổi ngôn ngữ (UC03). */
 .stg-inline-loading {
   display: flex;
