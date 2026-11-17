@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Empty,
+  Input,
   Popconfirm,
   Result,
   Space,
@@ -69,6 +70,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
 export function AdminPoiPage() {
   const { message } = App.useApp();
   const [pois, setPois] = useState<PoiSummary[]>([]);
+  const [searchText, setSearchText] = useState('');
   const [status, setStatus] = useState<LoadStatus>('loading');
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -282,25 +284,43 @@ export function AdminPoiPage() {
       )}
 
       {status === 'ready' && (
-        <Table<PoiSummary>
-          className="admin-table"
-          rowKey="id"
-          columns={columns}
-          dataSource={pois}
-          pagination={false}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Chưa có điểm tham quan nào"
-              >
-                <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-                  Thêm điểm
-                </Button>
-              </Empty>
-            ),
-          }}
-        />
+        <>
+          <Input
+            placeholder="Tìm kiếm điểm tham quan theo tên..."
+            allowClear
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ marginBottom: 16, maxWidth: 400 }}
+          />
+
+          <Table<PoiSummary>
+            className="admin-table"
+            rowKey="id"
+            columns={columns}
+            dataSource={pois.filter((poi) =>
+              poi.name.toLowerCase().includes(searchText.trim().toLowerCase())
+            )}
+            pagination={false}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    searchText.trim()
+                      ? 'Không tìm thấy điểm tham quan phù hợp'
+                      : 'Chưa có điểm tham quan nào'
+                  }
+                >
+                  {!searchText.trim() && (
+                    <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                      Thêm điểm
+                    </Button>
+                  )}
+                </Empty>
+              ),
+            }}
+          />
+        </>
       )}
 
       <PoiFormModal
