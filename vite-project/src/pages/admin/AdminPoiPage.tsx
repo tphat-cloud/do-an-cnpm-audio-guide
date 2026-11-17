@@ -65,6 +65,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     key: 'radiusM',
     width: 130,
     align: 'right',
+    sorter: (a, b) => a.radiusM - b.radiusM,
   },
   {
     title: 'Thứ tự',
