@@ -14,7 +14,7 @@ import {
   Typography,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { EnvironmentOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
+import { CopyOutlined, EnvironmentOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
 import {
   deletePoi,
   fetchAdminLocation,
@@ -57,8 +57,22 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     key: 'longitude',
     width: 150,
     sorter: (a, b) => a.longitude - b.longitude,
-    render: (value: number) => value.toFixed(7),
-  },
+    render: (value: number, poi) => (
+      <Space size={4}>
+        <span>{value.toFixed(7)}</span>
+        <Button
+          type="text"
+          size="small"
+          icon={<CopyOutlined />}
+          title="Sao chép tọa độ"
+          onClick={() => {
+            void navigator.clipboard.writeText(
+              `${poi.latitude}, ${poi.longitude}`,
+            );
+          }}
+        />
+      </Space>
+    ),
   {
     title: 'Bán kính (m)',
     dataIndex: 'radiusM',
