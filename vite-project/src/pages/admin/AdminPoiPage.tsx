@@ -73,6 +73,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     key: 'orderIndex',
     width: 100,
     align: 'right',
+    sorter: (a, b) => a.orderIndex - b.orderIndex,
   },
 ];
 
