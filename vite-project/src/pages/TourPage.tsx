@@ -61,6 +61,7 @@ export function TourPage() {
   const narrationRequestRef = useRef(0);
 
   const text = MESSAGES[lang];
+  const weakGps = !demoEnabled && fix?.source === 'real' && fix.accuracy > MAX_ACCURACY_M;
 
   // Tải lại trang /tour (F5) vẫn có dữ liệu nhờ location_id lưu trong sessionStorage.
   useEffect(() => {
@@ -247,6 +248,16 @@ export function TourPage() {
           />
         )}
       </div>
+
+      {weakGps && (
+        <Alert
+          className="stg-gps-notice"
+          type="warning"
+          showIcon
+          title={text.weakGpsWarning}
+          description={text.weakGpsHelp}
+        />
+      )}
 
       <main className="stg-main">
         {!hasPois ? (

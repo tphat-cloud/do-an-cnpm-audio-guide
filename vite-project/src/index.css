@@ -392,6 +392,11 @@ body {
   margin-top: -4px;
 }
 
+/* Dải cảnh báo tín hiệu GPS yếu (BR06, UC02 - 6b): giữ lề hai bên như nội dung. */
+.stg-gps-notice {
+  margin: 12px 20px 0;
+}
+
 /* Chỉ báo nhỏ khi tải lại địa danh do đổi ngôn ngữ (UC03). */
 .stg-inline-loading {
   display: flex;
