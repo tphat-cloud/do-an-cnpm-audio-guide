@@ -32,9 +32,9 @@
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | B1 | Khóa tài khoản sau 5 lần sai: đếm `failed_attempts`, đặt `locked_until`, trả 429 + `retryAfterSeconds` | backend/auth | 2.7.1, API01 | Cao | ✅ done (PR#5) | Phát |
-| F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | 🔒 doing | Nam Anh |
+| F1 | Hiện dải cảnh báo "Tín hiệu GPS yếu" (đang âm thầm bỏ tọa độ >30m) | FE Du khách | BR06, UC02-6b | Cao | ✅ done (PR#11) | Nam Anh |
 | F2 | Hàng chờ bài thuyết minh: điểm mới không cắt ngang audio đang phát | FE Du khách | BR05, UC04-5b | Cao | TODO | Nam Anh |
-| F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | 🔒 doing | Nam Anh |
+| F3 | Hướng dẫn bật lại quyền vị trí khi từ chối / mất giữa chừng | FE Du khách | UC02-5a, UC04-1b | Cao | ✅ done (PR#12) | Nam Anh |
 | D1 | Hoàn thiện PRD Chương 1 (Mục đích, Bài toán, Mục tiêu, Phạm vi) | docs | Ch.1 | Cao | TODO | Nhân |
 | D2 | Hoàn thiện PRD Chương 4 (Hiệu năng, Bảo mật, Tương thích, Khả năng dùng) | docs | Ch.4 | Cao | TODO | Nhân |
 
@@ -55,11 +55,14 @@
 
 | ID | Việc | Vùng / File chính | PRD | Ưu tiên | Trạng thái | Owner |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| B4 | CI/CD GitHub Actions: lint → type-check → test → build, chặn merge khi đỏ | DevOps | 4.5.1 | Thấp | 🔒 doing | Phát |
+| B4 | CI/CD GitHub Actions: lint → type-check → test → build, chặn merge khi đỏ | DevOps | 4.5.1 | Thấp | ✅ done (PR#9) | Phát |
 | B5 | Bật branch protection cho `main` (yêu cầu PR + review) | DevOps | 4.5.3 | Thấp | TODO | - |
 | D6 | Vẽ sơ đồ còn thiếu: 5.1 ERD, 5.3 Component, 5.4 Deployment + Activity Diagram | docs | 5.1, 5.3, 5.4 | Thấp | TODO | - |
 | D7 | README hướng dẫn chạy dự án (setup, env, lệnh) | docs | - | Thấp | TODO | - |
 | F6 | Định dạng/chèn ảnh 11 sơ đồ UC + activity trong PRD | docs | Ch.3 | Thấp | TODO | - |
+| A2 | Tìm kiếm điểm tham quan trong bảng Admin theo tên, không phân biệt hoa/thường; có trạng thái không tìm thấy và xóa bộ lọc | FE Admin | UC08 | Thấp | TODO | Nhân |
+| A3 | Cho sắp xếp bảng điểm Admin theo tên, tọa độ, bán kính và thứ tự; chỉ sắp xếp phía client | FE Admin | UC08 | Thấp | TODO | Nhân |
+| A4 | Thêm thao tác sao chép cặp tọa độ của điểm tham quan và thông báo thành công/lỗi | FE Admin | UC08 | Thấp | TODO | Nhân |
 | — | Slide bảo vệ + kịch bản demo (QR → ngôn ngữ → GPS/demo → nghe tự động → admin → thống kê) | Chung | - | Thấp | TODO | - |
 
 ---
