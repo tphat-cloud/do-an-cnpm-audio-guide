@@ -56,6 +56,7 @@ const DATA_COLUMNS: TableColumnsType<PoiSummary> = [
     dataIndex: 'longitude',
     key: 'longitude',
     width: 150,
+    sorter: (a, b) => a.longitude - b.longitude,
     render: (value: number) => value.toFixed(7),
   },
   {
