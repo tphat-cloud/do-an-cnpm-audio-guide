@@ -126,6 +126,7 @@ export function TourPage() {
       } catch {
         if (narrationRequestRef.current !== requestId) return;
         setNarrationStatus('error');
+        advanceQueueRef.current();
       }
     },
     [markListened]
