@@ -10,6 +10,9 @@ export type GpsStatus =
   | 'denied'
   | 'unavailable';
 
+/** Lỗi không còn tọa độ hợp lệ: thiết bị không hỗ trợ, bị từ chối hoặc mất quyền. */
+export type GpsErrorStatus = 'unsupported' | 'denied' | 'unavailable';
+
 /** Một lần định vị: tọa độ kèm sai số và nguồn (GPS thật hay giả lập). */
 export interface GpsFix extends LatLng {
   /** Sai số theo mét của lần định vị. */
@@ -34,6 +37,8 @@ interface GpsState {
   toggleDemo: () => void;
   setClickToMove: (enabled: boolean) => void;
   setStatus: (status: GpsStatus) => void;
+  /** Ghi nhận lỗi quyền vị trí và bỏ tọa độ cũ (UC02-5a, UC04-1b). */
+  setGpsError: (status: GpsErrorStatus) => void;
   /** Tọa độ từ watchPosition của trình duyệt (UC02). */
   setRealFix: (coordinates: { latitude: number; longitude: number; accuracy: number }) => void;
   /** Dịch chuyển tới tọa độ giả lập khi đang bật Demo. */
@@ -69,6 +74,10 @@ export const useGpsStore = create<GpsState>()((set, get) => ({
   setClickToMove: (enabled) => set({ clickToMove: enabled }),
 
   setStatus: (status) => set({ status }),
+
+  // Mất quyền giữa chừng phải bỏ tọa độ cũ, nếu không geofence vẫn dùng vị trí
+  // trước đó và có thể phát thuyết minh sai điểm.
+  setGpsError: (status) => set({ status, fix: null }),
 
   setRealFix: ({ latitude, longitude, accuracy }) => {
     if (get().demoEnabled) return;

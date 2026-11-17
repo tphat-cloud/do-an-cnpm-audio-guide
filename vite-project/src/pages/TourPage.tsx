@@ -43,12 +43,13 @@ export function TourPage() {
   const retryLangReload = useTourStore((state) => state.retryLangReload);
 
   const fix = useGpsStore((state) => state.fix);
+  const gpsStatus = useGpsStore((state) => state.status);
   const demoEnabled = useGpsStore((state) => state.demoEnabled);
   const clickToMove = useGpsStore((state) => state.clickToMove);
   const moveTo = useGpsStore((state) => state.moveTo);
 
-  // GPS thật chỉ theo dõi khi tắt chế độ Demo (xem useGeolocationWatch).
-  useGeolocationWatch();
+  // GPS thật chỉ theo dõi khi tắt chế độ Demo; retry dùng khi quyền bị mất.
+  const retryGps = useGeolocationWatch();
 
   const [selectedPoiId, setSelectedPoiId] = useState<number | null>(null);
   const [selectionNonce, setSelectionNonce] = useState(0);
@@ -62,6 +63,19 @@ export function TourPage() {
 
   const text = MESSAGES[lang];
   const weakGps = !demoEnabled && fix?.source === 'real' && fix.accuracy > MAX_ACCURACY_M;
+  const gpsIssue =
+    gpsStatus === 'denied' || gpsStatus === 'unavailable' || gpsStatus === 'unsupported'
+      ? gpsStatus
+      : null;
+  // UC02-5a, UC04-1b: mất quyền vị trí thì hướng dẫn bật lại và vẫn cho chọn điểm thủ công.
+  const gpsIssueText =
+    !demoEnabled && gpsIssue
+      ? {
+          denied: { title: text.gpsDeniedTitle, help: text.gpsDeniedHelp },
+          unavailable: { title: text.gpsUnavailableTitle, help: text.gpsUnavailableHelp },
+          unsupported: { title: text.gpsUnsupportedTitle, help: text.gpsUnsupportedHelp },
+        }[gpsIssue]
+      : null;
 
   // Tải lại trang /tour (F5) vẫn có dữ liệu nhờ location_id lưu trong sessionStorage.
   useEffect(() => {
@@ -248,6 +262,30 @@ export function TourPage() {
           />
         )}
       </div>
+
+      {gpsIssueText && (
+        <Alert
+          className="stg-gps-notice"
+          type={gpsIssue === 'unsupported' ? 'info' : 'warning'}
+          showIcon
+          title={gpsIssueText.title}
+          description={
+            <>
+              <div>{gpsIssueText.help}</div>
+              {(gpsIssue === 'denied' || gpsIssue === 'unavailable') && (
+                <Button
+                  className="stg-gps-retry"
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  onClick={retryGps}
+                >
+                  {text.retry}
+                </Button>
+              )}
+            </>
+          }
+        />
+      )}
 
       {weakGps && (
         <Alert
