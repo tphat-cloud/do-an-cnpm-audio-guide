@@ -9,6 +9,7 @@ dist/
 # Environment files
 .env
 *.local
+.deployed-tag
 
 # File audio admin tải lên (PRD 6.1 - phục vụ tại /uploads/audio)
 uploads/

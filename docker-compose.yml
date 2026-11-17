@@ -28,6 +28,8 @@ services:
       retries: 10
 
   auth-service:
+    image: ghcr.io/tphat-cloud/do-an-cnpm-audio-guide-auth-service:${IMAGE_TAG:-latest}
+    pull_policy: always
     build:
       context: ./backend/auth-service
       dockerfile: Dockerfile
@@ -58,6 +60,8 @@ services:
       start_period: 10s
 
   content-service:
+    image: ghcr.io/tphat-cloud/do-an-cnpm-audio-guide-content-service:${IMAGE_TAG:-latest}
+    pull_policy: always
     build:
       context: ./backend/content-service
       dockerfile: Dockerfile
@@ -90,6 +94,8 @@ services:
       start_period: 10s
 
   api-gateway:
+    image: ghcr.io/tphat-cloud/do-an-cnpm-audio-guide-api-gateway:${IMAGE_TAG:-latest}
+    pull_policy: always
     build:
       context: ./backend/api-gateway
       dockerfile: Dockerfile
@@ -124,6 +130,8 @@ services:
           - backend
 
   frontend:
+    image: ghcr.io/tphat-cloud/do-an-cnpm-audio-guide-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
     build:
       context: ./vite-project
       dockerfile: Dockerfile
