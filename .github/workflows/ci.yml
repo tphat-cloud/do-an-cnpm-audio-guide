@@ -13,6 +13,21 @@ jobs:
   ci:
     name: Lint, Type-check, Test & Build
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: narration_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: 1. Lấy mã nguồn (Checkout)
@@ -46,11 +61,27 @@ jobs:
           npm --prefix backend/api-gateway run typecheck
           npx --prefix vite-project tsc -b vite-project/tsconfig.json
 
+      - name: Prepare isolated MySQL integration database
+        run: node backend/auth-service/test/prepare-integration-db.cjs
+        env:
+          MYSQL_TEST_HOST: 127.0.0.1
+          MYSQL_TEST_PORT: 3306
+          MYSQL_ROOT_PASSWORD: ci-root-password
+
       - name: 4. Chạy test từng service
         run: |
           npm --prefix backend/auth-service test
           npm --prefix backend/content-service test
           npm --prefix backend/api-gateway test
+          npm --prefix backend/auth-service run test:integration
+          npm --prefix backend/content-service run test:integration
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: narration_test
+          JWT_SECRET: test_jwt_secret_key_for_automated_testing_2026
 
       - name: 5. Build từng service và frontend
         run: |
