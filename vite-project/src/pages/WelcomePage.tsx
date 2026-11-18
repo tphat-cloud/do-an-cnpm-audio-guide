@@ -4,6 +4,7 @@ import { Button, Empty, Listy, Result, Spin, Alert } from 'antd';
 import { ReloadOutlined, EnvironmentOutlined, RightOutlined } from '@ant-design/icons';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { MESSAGES } from '../i18n/messages';
+import { useGpsStore } from '../store/useGpsStore';
 import { useTourStore } from '../store/useTourStore';
 import type { PoiSummary } from '../types';
 
@@ -40,6 +41,7 @@ export function WelcomePage() {
   const refreshing = useTourStore((state) => state.refreshing);
   const refreshFailed = useTourStore((state) => state.refreshFailed);
   const retryLangReload = useTourStore((state) => state.retryLangReload);
+  const gpsDenied = useGpsStore((state) => state.status === 'denied');
 
   const [retryCount, setRetryCount] = useState(0);
   // Ảnh bìa lỗi/không tải được thì bỏ hẳn, quay về nền gradient xanh của khối trên cùng.
@@ -110,6 +112,16 @@ export function WelcomePage() {
       </header>
 
       <main className="stg-main">
+        {gpsDenied && (
+          <Alert
+            className="stg-gps-notice"
+            type="error"
+            showIcon
+            title="Error"
+            description={text.gpsDeniedHelp}
+          />
+        )}
+
         <section className="stg-section">
           <p className="stg-section-label">{text.chooseLanguage}</p>
           <LanguageSelector value={lang} onChange={setLang} />
