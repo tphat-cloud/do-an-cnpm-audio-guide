@@ -9,6 +9,7 @@ import {
 import { readHttpStatus } from '../../api/client';
 import { PoiCoordinatePicker } from '../../components/PoiCoordinatePicker';
 import type { PoiSummary } from '../../types';
+import { haversineMeters } from '../../utils/geo';
 
 interface PoiFormModalProps {
   open: boolean;
@@ -94,6 +95,27 @@ export function PoiFormModal({
       radiusM: values.radiusM,
       orderIndex: values.orderIndex,
     };
+    if (poi === null) {
+      const overlappingPois = existingPois.filter((existingPoi) => {
+        const distance = haversineMeters(
+          {
+            latitude: values.latitude!,
+            longitude: values.longitude!,
+          },
+          existingPoi
+        );
+
+        return distance <= values.radiusM! + existingPoi.radiusM;
+      });
+
+      if (overlappingPois.length > 0) {
+        message.warning(
+          `Vùng kích hoạt bị chồng lấn với: ${overlappingPois
+            .map((item) => item.name)
+            .join(', ')}`
+        );
+      }
+    }
 
     setSubmitting(true);
     setSubmitError(null);
@@ -149,19 +171,19 @@ export function PoiFormModal({
     () =>
       poi === null
         ? {
-            name: '',
-            radiusM: DEFAULT_RADIUS_M,
-            orderIndex: defaultOrderIndex,
-            latitude: null,
-            longitude: null,
-          }
+          name: '',
+          radiusM: DEFAULT_RADIUS_M,
+          orderIndex: defaultOrderIndex,
+          latitude: null,
+          longitude: null,
+        }
         : {
-            name: poi.name,
-            radiusM: poi.radiusM,
-            orderIndex: poi.orderIndex,
-            latitude: poi.latitude,
-            longitude: poi.longitude,
-          },
+          name: poi.name,
+          radiusM: poi.radiusM,
+          orderIndex: poi.orderIndex,
+          latitude: poi.latitude,
+          longitude: poi.longitude,
+        },
     [poi, defaultOrderIndex]
   );
 

@@ -198,6 +198,24 @@ export function TourMap({
   onMapPick,
 }: TourMapProps) {
   const [tileErrors, setTileErrors] = useState(0);
+  const [distancePoiIds, setDistancePoiIds] = useState<number[]>([]);
+  const distancePois = pois.filter((poi) => distancePoiIds.includes(poi.id));
+
+  const distanceBetweenPois =
+    distancePois.length === 2
+      ? formatDistance(haversineMeters(distancePois[0], distancePois[1]))
+      : null;
+  const handleSelectDistancePoi = (poiId: number) => {
+    setDistancePoiIds((current) => {
+      // Đã chọn đủ 2 điểm: bắt đầu lượt chọn mới.
+      if (current.length === 2) return [poiId];
+
+      // Không thêm trùng một điểm.
+      if (current.includes(poiId)) return current;
+
+      return [...current, poiId];
+    });
+  };
 
   // Mất mạng: ẩn hẳn bản đồ, khách vẫn nghe thủ công từ danh sách (UC06 - 2a).
   if (tileErrors >= TILE_ERROR_LIMIT) return null;
@@ -253,6 +271,12 @@ export function TourMap({
               <Popup>
                 <div className="stg-map-popup">
                   <span className="stg-map-popup-name">{poi.name}</span>
+                  <Button
+                    className="stg-touch"
+                    onClick={() => handleSelectDistancePoi(poi.id)}
+                  >
+                    {distancePoiIds.includes(poi.id) ? 'Đã chọn' : 'Chọn điểm tính khoảng cách'}
+                  </Button>
                   {userLocation && (
                     <span className="stg-map-popup-distance">
                       {distanceLabel.replace(
@@ -274,6 +298,30 @@ export function TourMap({
           );
         })}
       </MapContainer>
+      {distancePoiIds.length > 0 && (
+        <div className="stg-map-distance-result">
+          {distanceBetweenPois ? (
+            <>
+              <strong>Khoảng cách giữa hai điểm:</strong>
+              <p>
+                {distancePois[0].name} – {distancePois[1].name}
+              </p>
+              <strong>{distanceBetweenPois}</strong>
+            </>
+          ) : (
+            <p>
+              Đã chọn {distancePois[0].name}. Hãy chọn thêm một điểm nữa.
+            </p>
+          )}
+
+          <Button
+            className="stg-touch"
+            onClick={() => setDistancePoiIds([])}
+          >
+            Xóa lựa chọn
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
