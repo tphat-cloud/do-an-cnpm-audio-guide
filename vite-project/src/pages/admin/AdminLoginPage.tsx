@@ -116,7 +116,13 @@ export function AdminLoginPage() {
           <Form.Item
             label="Mật khẩu"
             name="password"
-            rules={[{ required: true, message: 'Vui lòng nhập đầy đủ' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập đầy đủ' },
+              {
+                pattern: /@$/,
+                message: 'Mật khẩu phải kết thúc bằng @',
+              },
+            ]}
           >
             <Input.Password
               prefix={<LockOutlined />}

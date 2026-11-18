@@ -22,7 +22,7 @@ export interface PoiUpdateValidationResult {
 
 const DEFAULT_RADIUS_M = 10;
 const MIN_RADIUS_M = 1;
-const MAX_RADIUS_M = '100';
+const MAX_RADIUS_M = 100;
 const MIN_LATITUDE = -90;
 const MAX_LATITUDE = 90;
 const MIN_LONGITUDE = -180;
