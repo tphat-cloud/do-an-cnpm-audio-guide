@@ -17,7 +17,7 @@ interface FakeAdmin {
   locked_until: Date | null;
 }
 
-const adminPasswordHash = bcrypt.hashSync('matkhau123', 4);
+const adminPasswordHash = bcrypt.hashSync('matkhau123@', 4);
 let fakeAdmin: FakeAdmin;
 let baseUrl: string;
 let server: Server;
@@ -145,10 +145,22 @@ describe('Auth service - POST /api/auth/login (API01)', () => {
     });
   });
 
-  it('đăng nhập đúng và cấp JWT có thời hạn 3600 giây', async () => {
+  it('từ chối mật khẩu admin nếu không kết thúc bằng @', async () => {
     const response = await postLogin({
       username: 'admin',
       password: 'matkhau123',
+    });
+
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), {
+      message: 'Sai tên đăng nhập hoặc mật khẩu',
+    });
+  });
+
+  it('đăng nhập đúng và cấp JWT có thời hạn 3600 giây', async () => {
+    const response = await postLogin({
+      username: 'admin',
+      password: 'matkhau123@',
     });
 
     assert.equal(response.status, 200);
@@ -173,14 +185,14 @@ describe('Auth service - POST /api/auth/login (API01)', () => {
     for (let attempt = 1; attempt <= 4; attempt++) {
       const response = await postLogin({
         username: 'admin',
-        password: 'sai_mat_khau',
+        password: 'sai_mat_khau@',
       });
       assert.equal(response.status, 401);
     }
 
     const fifthAttempt = await postLogin({
       username: 'admin',
-      password: 'sai_mat_khau',
+      password: 'sai_mat_khau@',
     });
     assert.equal(fifthAttempt.status, 429);
     assert.deepEqual(await fifthAttempt.json(), {
@@ -190,7 +202,7 @@ describe('Auth service - POST /api/auth/login (API01)', () => {
 
     const correctPasswordWhileLocked = await postLogin({
       username: 'admin',
-      password: 'matkhau123',
+      password: 'matkhau123@',
     });
     assert.equal(correctPasswordWhileLocked.status, 429);
   });

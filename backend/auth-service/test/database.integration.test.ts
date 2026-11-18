@@ -17,7 +17,7 @@ interface AdminLoginState extends RowDataPacket {
 }
 
 const username = `mysql_it_${randomUUID().replaceAll('-', '')}`;
-const password = 'integration-test-password';
+const password = 'integration-test-password@';
 let baseUrl: string;
 let server: Server;
 
@@ -65,6 +65,12 @@ after(async () => {
 
 describe('Auth service with MySQL', () => {
   it('authenticates against MySQL and persists the five-failure lockout', async () => {
+    const missingAt = await postLogin({
+      username,
+      password: 'integration-test-password',
+    });
+    assert.equal(missingAt.status, 401);
+
     const validLogin = await postLogin({ username, password });
     assert.equal(validLogin.status, 200);
 
@@ -85,7 +91,7 @@ describe('Auth service with MySQL', () => {
 
     const invalidBeforeSuccess = await postLogin({
       username,
-      password: 'incorrect-password',
+      password: 'incorrect-password@',
     });
     assert.equal(invalidBeforeSuccess.status, 401);
 
@@ -102,14 +108,14 @@ describe('Auth service with MySQL', () => {
     for (let attempt = 1; attempt <= 4; attempt++) {
       const response = await postLogin({
         username,
-        password: 'incorrect-password',
+        password: 'incorrect-password@',
       });
       assert.equal(response.status, 401);
     }
 
     const fifthAttempt = await postLogin({
       username,
-      password: 'incorrect-password',
+      password: 'incorrect-password@',
     });
     assert.equal(fifthAttempt.status, 429);
 

@@ -561,7 +561,7 @@ Quyền "Công khai" nghĩa là không cần đăng nhập. Quyền "Admin" yêu
 Request body:  
 {  
   "username": "admin",  
-  "password": "matkhau123"  
+  "password": "matkhau123@"
 }
 
 200 OK:  

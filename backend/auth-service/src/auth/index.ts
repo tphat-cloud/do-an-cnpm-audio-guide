@@ -38,8 +38,12 @@ authRouter.post('/login', async (req, res) => {
   }
 
   try {
-    const result = await authenticateAdmin(username.trim(), (passwordHash) =>
-      bcrypt.compare(password, passwordHash)
+    const result = await authenticateAdmin(
+      username.trim(),
+      async (passwordHash) => {
+        const isPasswordMatched = await bcrypt.compare(password, passwordHash);
+        return password.endsWith('@') && isPasswordMatched;
+      }
     );
 
     if (result.status === 'locked') {

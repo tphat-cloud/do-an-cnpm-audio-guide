@@ -2,7 +2,7 @@
 -- Dữ liệu mẫu tối thiểu (chạy sau schema.sql)
 -- 1 địa danh: Dinh Độc Lập
 -- 3 điểm tham quan kèm nội dung thuyết minh tiếng Việt (chưa có audio)
--- 1 tài khoản admin: admin / matkhau123 (mật khẩu đã băm bằng bcrypt)
+-- 1 tài khoản admin: admin / matkhau123@ (mật khẩu đã băm bằng bcrypt)
 -- Idempotent: chạy lại nhiều lần không sinh bản ghi trùng.
 -- ============================================================
 
@@ -68,7 +68,7 @@ ON DUPLICATE KEY UPDATE narration_text = VALUES(narration_text);
 INSERT INTO admins (username, password_hash)
 VALUES (
   'admin',
-  '$2b$10$OuLj/8mWTnJXjfRkJzjYPeH7qaRIOzt.YJ2XDMJIYg6wU.saqUwTi'
+  '$2b$10$gJcp/KjWjFeUFmnWeHcOMOQbEcA4cceAB60SrYeuexDP5zoynCHty'
 )
 ON DUPLICATE KEY UPDATE
   password_hash = VALUES(password_hash);
