@@ -319,9 +319,9 @@ export function TourPage() {
       {gpsIssueText && (
         <Alert
           className="stg-gps-notice"
-          type={gpsIssue === 'unsupported' ? 'info' : 'warning'}
+          type={gpsIssue === 'denied' ? 'error' : gpsIssue === 'unsupported' ? 'info' : 'warning'}
           showIcon
-          title={gpsIssueText.title}
+          title={gpsIssue === 'denied' ? 'Error' : gpsIssueText.title}
           description={
             <>
               <div>{gpsIssueText.help}</div>
